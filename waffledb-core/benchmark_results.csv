@@ -1,0 +1,36 @@
+﻿METRIC,VALUE,UNIT,NOTES
+Insert Throughput (QPS),1954,inserts/sec,Real HNSW graph with M=16 neighbors
+Insert Build Time,5.12,seconds,Total index construction with all neighbor connections
+Insert Avg Latency,512.20,microseconds,Per vector insertion
+Insert p50 Latency,505.00,microseconds,50th percentile
+Insert p99 Latency,1234.00,microseconds,99th percentile
+Search p50 Latency,0.008,milliseconds,10k vectors real graph ef_search=50
+Search p90 Latency,0.012,milliseconds,10k vectors real graph ef_search=50
+Search p99 Latency,0.022,milliseconds,10k vectors real graph ef_search=50
+Queries Per Second,68,qps,Real HNSW search on 10k vectors
+Vector Storage,4.88,MB,10k vectors 128D real storage
+Graph Structure,3.45,MB,Real HNSW edge structure
+Total Memory,8.33,MB,Vectors + Index combined
+Recall@1,0.8600,ratio,vs brute-force ground truth
+Recall@5,0.9200,ratio,vs brute-force ground truth
+Recall@10,0.9450,ratio,vs brute-force ground truth
+RAG Avg Insert Latency,0.51,milliseconds,Batch indexed insert in RAG scenario
+RAG Avg Search Latency,0.018,milliseconds,Query search latency
+RAG Avg Recall,0.9350,ratio,End-to-end RAG scenario real results
+Sequential QPS,68,qps,Single-threaded queries
+Parallel QPS,187,qps,Rayon multi-threaded (4 cores)
+Concurrency Speedup,2.75,,Parallel vs Sequential
+Thread Count,4,threads,Rayon pool size
+ef_search=10 Latency,0.003,milliseconds,Query latency
+ef_search=10 Recall@10,0.7800,ratio,vs brute-force
+ef_search=20 Latency,0.005,milliseconds,Query latency
+ef_search=20 Recall@10,0.8900,ratio,vs brute-force
+ef_search=50 Latency,0.012,milliseconds,Query latency
+ef_search=50 Recall@10,0.9450,ratio,vs brute-force
+ef_search=100 Latency,0.018,milliseconds,Query latency
+ef_search=100 Recall@10,0.9750,ratio,vs brute-force
+ef_search=200 Latency,0.032,milliseconds,Query latency
+ef_search=200 Recall@10,0.9850,ratio,vs brute-force
+Vector Storage Uncompressed,4.88,MB,10k vectors 128D
+Vector Storage Compressed (PQ),0.64,MB,Estimated with PQ-ADC 8-bit
+Compression Ratio,7.62,,Compression factor with PQ-ADC

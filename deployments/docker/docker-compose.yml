@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  waffledb:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    container_name: waffledb-server
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      RUST_LOG: debug
+      WAFFLEDB_HOST: 0.0.0.0
+      WAFFLEDB_HTTP_PORT: 8080
+      WAFFLEDB_GRPC_PORT: 9090
+      WAFFLEDB_STORAGE_PATH: /data
+    volumes:
+      - waffledb_data:/data
+    restart: unless-stopped
+    networks:
+      - waffledb-net
+
+volumes:
+  waffledb_data:
+    driver: local
+
+networks:
+  waffledb-net:
+    driver: bridge
+

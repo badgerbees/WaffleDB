@@ -1,0 +1,256 @@
+syntax = "proto3";
+
+package waffledb.v1;
+
+// ============================================================================
+// Collection Management Service
+// ============================================================================
+
+service CollectionService {
+    rpc CreateCollection(CreateCollectionRequest) returns (CreateCollectionResponse);
+    rpc DeleteCollection(DeleteCollectionRequest) returns (DeleteCollectionResponse);
+    rpc GetCollection(GetCollectionRequest) returns (CollectionInfo);
+    rpc ListCollections(ListCollectionsRequest) returns (ListCollectionsResponse);
+}
+
+message CreateCollectionRequest {
+    string name = 1;           // Unique collection name
+    uint32 dimension = 2;       // Vector dimension
+    string metric = 3;          // "l2", "cosine", "inner_product"
+    uint32 m = 4;               // HNSW M parameter (default 16)
+    float m_l = 5;              // HNSW M_l multiplier
+}
+
+message CreateCollectionResponse {
+    string name = 1;
+    uint32 dimension = 2;
+    string status = 3;
+}
+
+message DeleteCollectionRequest {
+    string name = 1;
+}
+
+message DeleteCollectionResponse {
+    string status = 1;
+}
+
+message GetCollectionRequest {
+    string name = 1;
+}
+
+message ListCollectionsRequest {}
+
+message ListCollectionsResponse {
+    repeated CollectionInfo collections = 1;
+}
+
+message CollectionInfo {
+    string name = 1;
+    uint32 dimension = 2;
+    string metric = 3;
+    uint64 vector_count = 4;
+    uint64 size_bytes = 5;
+}
+
+// ============================================================================
+// Insert Service
+// ============================================================================
+
+service InsertService {
+    rpc Insert(InsertRequest) returns (InsertResponse);
+    rpc BatchInsert(BatchInsertRequest) returns (BatchInsertResponse);
+}
+
+message InsertRequest {
+    string collection = 1;
+    optional string id = 2;                                      // Auto-generated if not provided
+    repeated float vector = 3 [packed = true];
+    map<string, string> metadata = 4;
+}
+
+message InsertResponse {
+    string id = 1;
+    string status = 2;
+}
+
+message BatchInsertRequest {
+    string collection = 1;
+    repeated InsertVector vectors = 2;
+}
+
+message InsertVector {
+    optional string id = 1;
+    repeated float vector = 2 [packed = true];
+    map<string, string> metadata = 3;
+}
+
+message BatchInsertResponse {
+    uint32 inserted_count = 1;
+    uint32 failed_count = 2;
+    repeated string errors = 3;
+}
+
+// ============================================================================
+// Search Service
+// ============================================================================
+
+service SearchService {
+    rpc Search(SearchRequest) returns (SearchResponse);
+    rpc BatchSearch(BatchSearchRequest) returns (BatchSearchResponse);
+}
+
+message SearchRequest {
+    string collection = 1;
+    repeated float vector = 2 [packed = true];
+    uint32 top_k = 3;
+    optional uint32 ef_search = 4;              // HNSW search parameter
+    map<string, string> filter = 5;             // Metadata filters
+}
+
+message SearchResponse {
+    repeated SearchResultItem results = 1;
+    double query_latency_ms = 2;
+}
+
+message SearchResultItem {
+    string id = 1;
+    float distance = 2;
+    map<string, string> metadata = 3;
+}
+
+message BatchSearchRequest {
+    string collection = 1;
+    repeated SearchQuery queries = 2;
+}
+
+message SearchQuery {
+    repeated float vector = 1 [packed = true];
+    uint32 top_k = 2;
+    optional uint32 ef_search = 3;
+    map<string, string> filter = 4;
+}
+
+message BatchSearchResponse {
+    repeated SearchResults all_results = 1;
+    double total_latency_ms = 2;
+}
+
+message SearchResults {
+    repeated SearchResultItem results = 1;
+}
+
+// ============================================================================
+// Delete Service
+// ============================================================================
+
+service DeleteService {
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
+
+message DeleteRequest {
+    string collection = 1;
+    string id = 2;
+}
+
+message DeleteResponse {
+    string status = 1;
+}
+
+// ============================================================================
+// Metadata Service
+// ============================================================================
+
+service MetadataService {
+    rpc UpdateMetadata(UpdateMetadataRequest) returns (UpdateMetadataResponse);
+}
+
+message UpdateMetadataRequest {
+    string collection = 1;
+    string id = 2;
+    map<string, string> metadata = 3;
+}
+
+message UpdateMetadataResponse {
+    string status = 1;
+}
+
+// ============================================================================
+// Snapshot Service (Index Persistence)
+// ============================================================================
+
+service SnapshotService {
+    rpc CreateSnapshot(CreateSnapshotRequest) returns (SnapshotResponse);
+    rpc LoadSnapshot(LoadSnapshotRequest) returns (LoadSnapshotResponse);
+}
+
+message CreateSnapshotRequest {
+    string collection = 1;
+}
+
+message SnapshotResponse {
+    string snapshot_id = 1;
+    uint64 timestamp = 2;
+    uint64 vector_count = 3;
+    uint64 size_bytes = 4;
+}
+
+message LoadSnapshotRequest {
+    string collection = 1;
+    string snapshot_id = 2;
+}
+
+message LoadSnapshotResponse {
+    string status = 1;
+    uint64 vectors_restored = 2;
+}
+
+// ============================================================================
+// Statistics & Monitoring Service
+// ============================================================================
+
+service StatsService {
+    rpc GetStats(GetStatsRequest) returns (CollectionStats);
+    rpc GetHealth(GetHealthRequest) returns (HealthResponse);
+    rpc GetMetrics(GetMetricsRequest) returns (MetricsResponse);
+}
+
+message GetStatsRequest {
+    string collection = 1;
+}
+
+message CollectionStats {
+    string name = 1;
+    uint64 vector_count = 2;
+    uint64 memory_bytes = 3;
+    uint32 hnsw_layers = 4;
+    bool index_ready = 5;
+}
+
+message GetHealthRequest {}
+
+message HealthResponse {
+    string status = 1;
+    string version = 2;
+    uint64 uptime_seconds = 3;
+}
+
+message GetMetricsRequest {}
+
+message MetricsResponse {
+    double search_latency_p95_ms = 1;
+    double search_latency_p99_ms = 2;
+    double insert_latency_p95_ms = 3;
+    double cache_hit_rate = 4;
+    uint64 total_requests = 5;
+    uint64 total_errors = 6;
+}
+
+// ============================================================================
+// Error Response
+// ============================================================================
+
+message ErrorResponse {
+    string error = 1;
+    uint32 code = 2;
+}

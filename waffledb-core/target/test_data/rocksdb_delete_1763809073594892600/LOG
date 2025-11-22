@@ -1,0 +1,244 @@
+2025/11/22-17:57:53.601509 8a4c RocksDB version: 8.1.1
+2025/11/22-17:57:53.602058 8a4c Compile date 2023-04-06 16:38:52
+2025/11/22-17:57:53.602081 8a4c DB SUMMARY
+2025/11/22-17:57:53.602092 8a4c DB Session ID:  SOTBC2A8K3QL301AWWE5
+2025/11/22-17:57:53.602761 8a4c SST files in target/test_data/rocksdb_delete_1763809073594892600 dir, Total Num: 0, files: 
+2025/11/22-17:57:53.602789 8a4c Write Ahead Log file in target/test_data/rocksdb_delete_1763809073594892600: 
+2025/11/22-17:57:53.602799 8a4c                         Options.error_if_exists: 0
+2025/11/22-17:57:53.602809 8a4c                       Options.create_if_missing: 1
+2025/11/22-17:57:53.602817 8a4c                         Options.paranoid_checks: 1
+2025/11/22-17:57:53.602825 8a4c             Options.flush_verify_memtable_count: 1
+2025/11/22-17:57:53.602927 8a4c                               Options.track_and_verify_wals_in_manifest: 0
+2025/11/22-17:57:53.602947 8a4c        Options.verify_sst_unique_id_in_manifest: 1
+2025/11/22-17:57:53.602955 8a4c                                     Options.env: 000002C7C8A17820
+2025/11/22-17:57:53.602961 8a4c                                      Options.fs: WinFS
+2025/11/22-17:57:53.602964 8a4c                                Options.info_log: 000002C7C8A1D7D0
+2025/11/22-17:57:53.602968 8a4c                Options.max_file_opening_threads: 16
+2025/11/22-17:57:53.602972 8a4c                              Options.statistics: 0000000000000000
+2025/11/22-17:57:53.602984 8a4c                               Options.use_fsync: 0
+2025/11/22-17:57:53.602988 8a4c                       Options.max_log_file_size: 0
+2025/11/22-17:57:53.602992 8a4c                  Options.max_manifest_file_size: 1073741824
+2025/11/22-17:57:53.602995 8a4c                   Options.log_file_time_to_roll: 0
+2025/11/22-17:57:53.602999 8a4c                       Options.keep_log_file_num: 1000
+2025/11/22-17:57:53.603004 8a4c                    Options.recycle_log_file_num: 0
+2025/11/22-17:57:53.603008 8a4c                         Options.allow_fallocate: 1
+2025/11/22-17:57:53.603012 8a4c                        Options.allow_mmap_reads: 0
+2025/11/22-17:57:53.603015 8a4c                       Options.allow_mmap_writes: 0
+2025/11/22-17:57:53.603019 8a4c                        Options.use_direct_reads: 0
+2025/11/22-17:57:53.603022 8a4c                        Options.use_direct_io_for_flush_and_compaction: 0
+2025/11/22-17:57:53.603026 8a4c          Options.create_missing_column_families: 0
+2025/11/22-17:57:53.603029 8a4c                              Options.db_log_dir: 
+2025/11/22-17:57:53.603032 8a4c                                 Options.wal_dir: 
+2025/11/22-17:57:53.603035 8a4c                Options.table_cache_numshardbits: 6
+2025/11/22-17:57:53.603039 8a4c                         Options.WAL_ttl_seconds: 0
+2025/11/22-17:57:53.603042 8a4c                       Options.WAL_size_limit_MB: 0
+2025/11/22-17:57:53.603045 8a4c                        Options.max_write_batch_group_size_bytes: 1048576
+2025/11/22-17:57:53.603048 8a4c             Options.manifest_preallocation_size: 4194304
+2025/11/22-17:57:53.603052 8a4c                     Options.is_fd_close_on_exec: 1
+2025/11/22-17:57:53.603055 8a4c                   Options.advise_random_on_open: 1
+2025/11/22-17:57:53.603059 8a4c                    Options.db_write_buffer_size: 0
+2025/11/22-17:57:53.603062 8a4c                    Options.write_buffer_manager: 000002C7C87CA020
+2025/11/22-17:57:53.603066 8a4c         Options.access_hint_on_compaction_start: 1
+2025/11/22-17:57:53.603069 8a4c           Options.random_access_max_buffer_size: 1048576
+2025/11/22-17:57:53.603073 8a4c                      Options.use_adaptive_mutex: 0
+2025/11/22-17:57:53.603077 8a4c                            Options.rate_limiter: 0000000000000000
+2025/11/22-17:57:53.603086 8a4c     Options.sst_file_manager.rate_bytes_per_sec: 0
+2025/11/22-17:57:53.603089 8a4c                       Options.wal_recovery_mode: 2
+2025/11/22-17:57:53.603093 8a4c                  Options.enable_thread_tracking: 0
+2025/11/22-17:57:53.603096 8a4c                  Options.enable_pipelined_write: 0
+2025/11/22-17:57:53.603125 8a4c                  Options.unordered_write: 0
+2025/11/22-17:57:53.603130 8a4c         Options.allow_concurrent_memtable_write: 1
+2025/11/22-17:57:53.603134 8a4c      Options.enable_write_thread_adaptive_yield: 1
+2025/11/22-17:57:53.603137 8a4c             Options.write_thread_max_yield_usec: 100
+2025/11/22-17:57:53.603140 8a4c            Options.write_thread_slow_yield_usec: 3
+2025/11/22-17:57:53.603144 8a4c                               Options.row_cache: None
+2025/11/22-17:57:53.603148 8a4c                              Options.wal_filter: None
+2025/11/22-17:57:53.603151 8a4c             Options.avoid_flush_during_recovery: 0
+2025/11/22-17:57:53.603155 8a4c             Options.allow_ingest_behind: 0
+2025/11/22-17:57:53.603158 8a4c             Options.two_write_queues: 0
+2025/11/22-17:57:53.603162 8a4c             Options.manual_wal_flush: 0
+2025/11/22-17:57:53.603165 8a4c             Options.wal_compression: 0
+2025/11/22-17:57:53.603168 8a4c             Options.atomic_flush: 0
+2025/11/22-17:57:53.603171 8a4c             Options.avoid_unnecessary_blocking_io: 0
+2025/11/22-17:57:53.603175 8a4c                 Options.persist_stats_to_disk: 0
+2025/11/22-17:57:53.603179 8a4c                 Options.write_dbid_to_manifest: 0
+2025/11/22-17:57:53.603182 8a4c                 Options.log_readahead_size: 0
+2025/11/22-17:57:53.603186 8a4c                 Options.file_checksum_gen_factory: Unknown
+2025/11/22-17:57:53.603190 8a4c                 Options.best_efforts_recovery: 0
+2025/11/22-17:57:53.603193 8a4c                Options.max_bgerror_resume_count: 2147483647
+2025/11/22-17:57:53.603197 8a4c            Options.bgerror_resume_retry_interval: 1000000
+2025/11/22-17:57:53.603200 8a4c             Options.allow_data_in_errors: 0
+2025/11/22-17:57:53.603204 8a4c             Options.db_host_id: __hostname__
+2025/11/22-17:57:53.603207 8a4c             Options.enforce_single_del_contracts: true
+2025/11/22-17:57:53.603211 8a4c             Options.max_background_jobs: 2
+2025/11/22-17:57:53.603214 8a4c             Options.max_background_compactions: -1
+2025/11/22-17:57:53.603218 8a4c             Options.max_subcompactions: 1
+2025/11/22-17:57:53.603221 8a4c             Options.avoid_flush_during_shutdown: 0
+2025/11/22-17:57:53.603224 8a4c           Options.writable_file_max_buffer_size: 1048576
+2025/11/22-17:57:53.603228 8a4c             Options.delayed_write_rate : 16777216
+2025/11/22-17:57:53.603231 8a4c             Options.max_total_wal_size: 0
+2025/11/22-17:57:53.603235 8a4c             Options.delete_obsolete_files_period_micros: 21600000000
+2025/11/22-17:57:53.603238 8a4c                   Options.stats_dump_period_sec: 600
+2025/11/22-17:57:53.603241 8a4c                 Options.stats_persist_period_sec: 600
+2025/11/22-17:57:53.603245 8a4c                 Options.stats_history_buffer_size: 1048576
+2025/11/22-17:57:53.603248 8a4c                          Options.max_open_files: -1
+2025/11/22-17:57:53.603251 8a4c                          Options.bytes_per_sync: 0
+2025/11/22-17:57:53.603254 8a4c                      Options.wal_bytes_per_sync: 0
+2025/11/22-17:57:53.603258 8a4c                   Options.strict_bytes_per_sync: 0
+2025/11/22-17:57:53.603261 8a4c       Options.compaction_readahead_size: 0
+2025/11/22-17:57:53.603264 8a4c                  Options.max_background_flushes: -1
+2025/11/22-17:57:53.603267 8a4c Compression algorithms supported:
+2025/11/22-17:57:53.603275 8a4c 	kZSTD supported: 1
+2025/11/22-17:57:53.603279 8a4c 	kSnappyCompression supported: 1
+2025/11/22-17:57:53.603285 8a4c 	kBZip2Compression supported: 1
+2025/11/22-17:57:53.603288 8a4c 	kZlibCompression supported: 1
+2025/11/22-17:57:53.603291 8a4c 	kLZ4Compression supported: 1
+2025/11/22-17:57:53.603294 8a4c 	kXpressCompression supported: 0
+2025/11/22-17:57:53.603298 8a4c 	kLZ4HCCompression supported: 1
+2025/11/22-17:57:53.603301 8a4c 	kZSTDNotFinalCompression supported: 1
+2025/11/22-17:57:53.603311 8a4c Fast CRC32 supported: Not supported on x86
+2025/11/22-17:57:53.603315 8a4c DMutex implementation: std::mutex
+2025/11/22-17:57:53.611750 8a4c [:315] Creating manifest 1 
+2025/11/22-17:57:53.623016 8a4c [c:5662] Recovering from manifest file: target/test_data/rocksdb_delete_1763809073594892600/MANIFEST-000001
+2025/11/22-17:57:53.628862 8a4c [db/column_family.cc:621] --------------- Options for column family [default]:
+2025/11/22-17:57:53.628878 8a4c               Options.comparator: leveldb.BytewiseComparator
+2025/11/22-17:57:53.628888 8a4c           Options.merge_operator: None
+2025/11/22-17:57:53.628891 8a4c        Options.compaction_filter: None
+2025/11/22-17:57:53.628895 8a4c        Options.compaction_filter_factory: None
+2025/11/22-17:57:53.628899 8a4c  Options.sst_partitioner_factory: None
+2025/11/22-17:57:53.628902 8a4c         Options.memtable_factory: SkipListFactory
+2025/11/22-17:57:53.628906 8a4c            Options.table_factory: BlockBasedTable
+2025/11/22-17:57:53.628937 8a4c            table_factory options:   flush_block_policy_factory: FlushBlockBySizePolicyFactory (000002C7C87640D0)
+  cache_index_and_filter_blocks: 0
+  cache_index_and_filter_blocks_with_high_priority: 1
+  pin_l0_filter_and_index_blocks_in_cache: 0
+  pin_top_level_index_and_filter: 1
+  index_type: 0
+  data_block_index_type: 0
+  index_shortening: 1
+  data_block_hash_table_util_ratio: 0.750000
+  checksum: 4
+  no_block_cache: 0
+  block_cache: 000002C7C8773890
+  block_cache_name: LRUCache
+  block_cache_options:
+    capacity : 8388608
+    num_shard_bits : 4
+    strict_capacity_limit : 0
+    memory_allocator : None
+    high_pri_pool_ratio: 0.000
+    low_pri_pool_ratio: 0.000
+  persistent_cache: 0000000000000000
+  block_size: 4096
+  block_size_deviation: 10
+  block_restart_interval: 16
+  index_block_restart_interval: 1
+  metadata_block_size: 4096
+  partition_filters: 0
+  use_delta_encoding: 1
+  filter_policy: nullptr
+  whole_key_filtering: 1
+  verify_compression: 0
+  read_amp_bytes_per_bit: 0
+  format_version: 5
+  enable_index_compression: 1
+  block_align: 0
+  max_auto_readahead_size: 262144
+  prepopulate_block_cache: 0
+  initial_auto_readahead_size: 8192
+  num_file_reads_for_auto_readahead: 2
+2025/11/22-17:57:53.628943 8a4c        Options.write_buffer_size: 67108864
+2025/11/22-17:57:53.628947 8a4c  Options.max_write_buffer_number: 2
+2025/11/22-17:57:53.628950 8a4c          Options.compression: Snappy
+2025/11/22-17:57:53.628954 8a4c                  Options.bottommost_compression: Disabled
+2025/11/22-17:57:53.628957 8a4c       Options.prefix_extractor: nullptr
+2025/11/22-17:57:53.628960 8a4c   Options.memtable_insert_with_hint_prefix_extractor: nullptr
+2025/11/22-17:57:53.628964 8a4c             Options.num_levels: 7
+2025/11/22-17:57:53.628966 8a4c        Options.min_write_buffer_number_to_merge: 1
+2025/11/22-17:57:53.628970 8a4c     Options.max_write_buffer_number_to_maintain: 0
+2025/11/22-17:57:53.628973 8a4c     Options.max_write_buffer_size_to_maintain: 0
+2025/11/22-17:57:53.628976 8a4c            Options.bottommost_compression_opts.window_bits: -14
+2025/11/22-17:57:53.628979 8a4c                  Options.bottommost_compression_opts.level: 32767
+2025/11/22-17:57:53.628983 8a4c               Options.bottommost_compression_opts.strategy: 0
+2025/11/22-17:57:53.628986 8a4c         Options.bottommost_compression_opts.max_dict_bytes: 0
+2025/11/22-17:57:53.628989 8a4c         Options.bottommost_compression_opts.zstd_max_train_bytes: 0
+2025/11/22-17:57:53.628992 8a4c         Options.bottommost_compression_opts.parallel_threads: 1
+2025/11/22-17:57:53.628995 8a4c                  Options.bottommost_compression_opts.enabled: false
+2025/11/22-17:57:53.628999 8a4c         Options.bottommost_compression_opts.max_dict_buffer_bytes: 0
+2025/11/22-17:57:53.629002 8a4c         Options.bottommost_compression_opts.use_zstd_dict_trainer: true
+2025/11/22-17:57:53.629005 8a4c            Options.compression_opts.window_bits: -14
+2025/11/22-17:57:53.629008 8a4c                  Options.compression_opts.level: 32767
+2025/11/22-17:57:53.629011 8a4c               Options.compression_opts.strategy: 0
+2025/11/22-17:57:53.629014 8a4c         Options.compression_opts.max_dict_bytes: 0
+2025/11/22-17:57:53.629020 8a4c         Options.compression_opts.zstd_max_train_bytes: 0
+2025/11/22-17:57:53.629025 8a4c         Options.compression_opts.use_zstd_dict_trainer: true
+2025/11/22-17:57:53.629029 8a4c         Options.compression_opts.parallel_threads: 1
+2025/11/22-17:57:53.629033 8a4c                  Options.compression_opts.enabled: false
+2025/11/22-17:57:53.629036 8a4c         Options.compression_opts.max_dict_buffer_bytes: 0
+2025/11/22-17:57:53.629039 8a4c      Options.level0_file_num_compaction_trigger: 4
+2025/11/22-17:57:53.629042 8a4c          Options.level0_slowdown_writes_trigger: 20
+2025/11/22-17:57:53.629045 8a4c              Options.level0_stop_writes_trigger: 36
+2025/11/22-17:57:53.629048 8a4c                   Options.target_file_size_base: 67108864
+2025/11/22-17:57:53.629051 8a4c             Options.target_file_size_multiplier: 1
+2025/11/22-17:57:53.629054 8a4c                Options.max_bytes_for_level_base: 268435456
+2025/11/22-17:57:53.629057 8a4c Options.level_compaction_dynamic_level_bytes: 0
+2025/11/22-17:57:53.629060 8a4c          Options.max_bytes_for_level_multiplier: 10.000000
+2025/11/22-17:57:53.629067 8a4c Options.max_bytes_for_level_multiplier_addtl[0]: 1
+2025/11/22-17:57:53.629071 8a4c Options.max_bytes_for_level_multiplier_addtl[1]: 1
+2025/11/22-17:57:53.629074 8a4c Options.max_bytes_for_level_multiplier_addtl[2]: 1
+2025/11/22-17:57:53.629077 8a4c Options.max_bytes_for_level_multiplier_addtl[3]: 1
+2025/11/22-17:57:53.629081 8a4c Options.max_bytes_for_level_multiplier_addtl[4]: 1
+2025/11/22-17:57:53.629085 8a4c Options.max_bytes_for_level_multiplier_addtl[5]: 1
+2025/11/22-17:57:53.629088 8a4c Options.max_bytes_for_level_multiplier_addtl[6]: 1
+2025/11/22-17:57:53.629091 8a4c       Options.max_sequential_skip_in_iterations: 8
+2025/11/22-17:57:53.629094 8a4c                    Options.max_compaction_bytes: 1677721600
+2025/11/22-17:57:53.629097 8a4c   Options.ignore_max_compaction_bytes_for_input: true
+2025/11/22-17:57:53.629100 8a4c                        Options.arena_block_size: 1048576
+2025/11/22-17:57:53.629103 8a4c   Options.soft_pending_compaction_bytes_limit: 68719476736
+2025/11/22-17:57:53.629106 8a4c   Options.hard_pending_compaction_bytes_limit: 274877906944
+2025/11/22-17:57:53.629110 8a4c                Options.disable_auto_compactions: 0
+2025/11/22-17:57:53.629114 8a4c                        Options.compaction_style: kCompactionStyleLevel
+2025/11/22-17:57:53.629119 8a4c                          Options.compaction_pri: kMinOverlappingRatio
+2025/11/22-17:57:53.629122 8a4c Options.compaction_options_universal.size_ratio: 1
+2025/11/22-17:57:53.629126 8a4c Options.compaction_options_universal.min_merge_width: 2
+2025/11/22-17:57:53.629129 8a4c Options.compaction_options_universal.max_merge_width: 4294967295
+2025/11/22-17:57:53.629132 8a4c Options.compaction_options_universal.max_size_amplification_percent: 200
+2025/11/22-17:57:53.629136 8a4c Options.compaction_options_universal.compression_size_percent: -1
+2025/11/22-17:57:53.629140 8a4c Options.compaction_options_universal.stop_style: kCompactionStopStyleTotalSize
+2025/11/22-17:57:53.629144 8a4c Options.compaction_options_fifo.max_table_files_size: 1073741824
+2025/11/22-17:57:53.629147 8a4c Options.compaction_options_fifo.allow_compaction: 0
+2025/11/22-17:57:53.629152 8a4c                   Options.table_properties_collectors: 
+2025/11/22-17:57:53.629156 8a4c                   Options.inplace_update_support: 0
+2025/11/22-17:57:53.629159 8a4c                 Options.inplace_update_num_locks: 10000
+2025/11/22-17:57:53.629162 8a4c               Options.memtable_prefix_bloom_size_ratio: 0.000000
+2025/11/22-17:57:53.629166 8a4c               Options.memtable_whole_key_filtering: 0
+2025/11/22-17:57:53.629169 8a4c   Options.memtable_huge_page_size: 0
+2025/11/22-17:57:53.629172 8a4c                           Options.bloom_locality: 0
+2025/11/22-17:57:53.629176 8a4c                    Options.max_successive_merges: 0
+2025/11/22-17:57:53.629179 8a4c                Options.optimize_filters_for_hits: 0
+2025/11/22-17:57:53.629182 8a4c                Options.paranoid_file_checks: 0
+2025/11/22-17:57:53.629219 8a4c                Options.force_consistency_checks: 1
+2025/11/22-17:57:53.629224 8a4c                Options.report_bg_io_stats: 0
+2025/11/22-17:57:53.629227 8a4c                               Options.ttl: 2592000
+2025/11/22-17:57:53.629230 8a4c          Options.periodic_compaction_seconds: 0
+2025/11/22-17:57:53.629233 8a4c  Options.preclude_last_level_data_seconds: 0
+2025/11/22-17:57:53.629236 8a4c    Options.preserve_internal_time_seconds: 0
+2025/11/22-17:57:53.629239 8a4c                       Options.enable_blob_files: false
+2025/11/22-17:57:53.629243 8a4c                           Options.min_blob_size: 0
+2025/11/22-17:57:53.629246 8a4c                          Options.blob_file_size: 268435456
+2025/11/22-17:57:53.629249 8a4c                   Options.blob_compression_type: NoCompression
+2025/11/22-17:57:53.629253 8a4c          Options.enable_blob_garbage_collection: false
+2025/11/22-17:57:53.629256 8a4c      Options.blob_garbage_collection_age_cutoff: 0.250000
+2025/11/22-17:57:53.629260 8a4c Options.blob_garbage_collection_force_threshold: 1.000000
+2025/11/22-17:57:53.629263 8a4c          Options.blob_compaction_readahead_size: 0
+2025/11/22-17:57:53.629266 8a4c                Options.blob_file_starting_level: 0
+2025/11/22-17:57:53.629269 8a4c Options.experimental_mempurge_threshold: 0.000000
+2025/11/22-17:57:53.633807 8a4c [e_number is %llu, next_file_number is %llu, last_sequence is %llu, log_number is %llu,prev_log_number is %llu,max_column_family is %u,min_log_number_to_keep is %llu
+:5713] Recovered from manifest file:target/test_data/rocksdb_delete_1763809073594892600/MANIFEST-000001 succeeded,manifest_file_number is 1, next_file_number is 3, last_sequence is 0, log_number is 0,prev_log_number is 0,max_column_family is 0,min_log_number_to_keep is 0
+2025/11/22-17:57:53.633818 8a4c [ocate MANIFEST file in :5722] Column family [default] (ID 0), log number is 0
+2025/11/22-17:57:53.634107 8a4c [ new Db, wal_dir contains existing log file: :537] DB ID: 17bea1ce-c792-11f0-81f2-6c2f80854930
+2025/11/22-17:57:53.635296 8a4c [rocksdb/db/version_set.cc:5180] Creating manifest 5
+2025/11/22-17:57:53.647858 8a4c [() failed --- Unable to persist Options file:1977] SstFileManager instance 000002C7C87FA070
+2025/11/22-17:57:53.648350 8a4c DB pointer 000002C7C87CCE00
+2025/11/22-17:57:53.648602 8a4c [pl/db_impl.cc:490] Shutdown: canceling all background work
+2025/11/22-17:57:53.650082 8a4c [ Ignoring error %s:692] Shutdown complete
