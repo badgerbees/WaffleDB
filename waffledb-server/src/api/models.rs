@@ -39,7 +39,7 @@ fn default_metric() -> String {
 }
 
 fn default_engine() -> Option<String> {
-    Some("hnsw".to_string())
+    Some("hybrid".to_string())
 }
 
 fn default_m() -> Option<usize> {

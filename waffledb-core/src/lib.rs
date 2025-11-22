@@ -5,9 +5,11 @@ pub mod storage;
 pub mod metadata;
 pub mod errors;
 pub mod utils;
+pub mod buffer;
 pub mod engine;
 
 pub use errors::{Result, WaffleError};
 pub use vector::types::Vector;
 pub use hnsw::{HNSWBuilder, HNSWIndex};
+pub use buffer::{WriteBuffer, MultiLayerSearcher, BuildStatus, SearchResult};
 pub use engine::{VectorEngine, EngineSearchResult, EngineStats};

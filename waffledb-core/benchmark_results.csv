@@ -1,36 +1,34 @@
-﻿METRIC,VALUE,UNIT,NOTES
-Insert Throughput (QPS),1954,inserts/sec,Real HNSW graph with M=16 neighbors
-Insert Build Time,5.12,seconds,Total index construction with all neighbor connections
-Insert Avg Latency,512.20,microseconds,Per vector insertion
-Insert p50 Latency,505.00,microseconds,50th percentile
-Insert p99 Latency,1234.00,microseconds,99th percentile
-Search p50 Latency,0.008,milliseconds,10k vectors real graph ef_search=50
-Search p90 Latency,0.012,milliseconds,10k vectors real graph ef_search=50
-Search p99 Latency,0.022,milliseconds,10k vectors real graph ef_search=50
-Queries Per Second,68,qps,Real HNSW search on 10k vectors
-Vector Storage,4.88,MB,10k vectors 128D real storage
-Graph Structure,3.45,MB,Real HNSW edge structure
-Total Memory,8.33,MB,Vectors + Index combined
-Recall@1,0.8600,ratio,vs brute-force ground truth
-Recall@5,0.9200,ratio,vs brute-force ground truth
-Recall@10,0.9450,ratio,vs brute-force ground truth
-RAG Avg Insert Latency,0.51,milliseconds,Batch indexed insert in RAG scenario
-RAG Avg Search Latency,0.018,milliseconds,Query search latency
-RAG Avg Recall,0.9350,ratio,End-to-end RAG scenario real results
-Sequential QPS,68,qps,Single-threaded queries
-Parallel QPS,187,qps,Rayon multi-threaded (4 cores)
-Concurrency Speedup,2.75,,Parallel vs Sequential
-Thread Count,4,threads,Rayon pool size
-ef_search=10 Latency,0.003,milliseconds,Query latency
-ef_search=10 Recall@10,0.7800,ratio,vs brute-force
+METRIC,VALUE,UNIT,NOTES
+Insert Throughput (QPS),1917,inserts/sec,100k vectors 128D
+Insert Build Time,5.22,seconds,Total index construction
+Insert Avg Latency,521.11,microseconds,Per vector
+Search p50 Latency,3.956,milliseconds,ef_search=50 100k vectors
+Search p90 Latency,5.575,milliseconds,ef_search=50 100k vectors
+Search p99 Latency,7.102,milliseconds,ef_search=50 100k vectors
+Queries Per Second,205,qps,ef_search=50 100k vectors
+Vector Storage,4.88,MB,100k vectors 128D
+Graph Structure,2.75,MB,HNSW index graph
+Total Memory,7.63,MB,Vectors + Index
+Recall@1,0.0000,ratio,vs brute-force ground truth
+Recall@5,0.0000,ratio,vs brute-force ground truth
+Recall@10,0.0000,ratio,vs brute-force ground truth
+RAG Avg Insert Latency,0.05,milliseconds,Batch indexed insert
+RAG Avg Search Latency,3.08,milliseconds,Query search
+RAG Avg Recall,0.0010,ratio,End-to-end scenario
+Sequential QPS,218531,qps,Single-threaded queries
+Parallel QPS,277008,qps,Rayon multi-threaded
+Concurrency Speedup,1.27,×,Parallel vs Sequential
+Thread Count,32,threads,Rayon pool size
+ef_search=10 Latency,0.007,milliseconds,Query latency
+ef_search=10 Recall@10,0.0000,ratio,vs brute-force
 ef_search=20 Latency,0.005,milliseconds,Query latency
-ef_search=20 Recall@10,0.8900,ratio,vs brute-force
-ef_search=50 Latency,0.012,milliseconds,Query latency
-ef_search=50 Recall@10,0.9450,ratio,vs brute-force
-ef_search=100 Latency,0.018,milliseconds,Query latency
-ef_search=100 Recall@10,0.9750,ratio,vs brute-force
-ef_search=200 Latency,0.032,milliseconds,Query latency
-ef_search=200 Recall@10,0.9850,ratio,vs brute-force
-Vector Storage Uncompressed,4.88,MB,10k vectors 128D
-Vector Storage Compressed (PQ),0.64,MB,Estimated with PQ-ADC 8-bit
-Compression Ratio,7.62,,Compression factor with PQ-ADC
+ef_search=20 Recall@10,0.0000,ratio,vs brute-force
+ef_search=50 Latency,0.005,milliseconds,Query latency
+ef_search=50 Recall@10,0.0000,ratio,vs brute-force
+ef_search=100 Latency,0.005,milliseconds,Query latency
+ef_search=100 Recall@10,0.0000,ratio,vs brute-force
+ef_search=200 Latency,0.005,milliseconds,Query latency
+ef_search=200 Recall@10,0.0000,ratio,vs brute-force
+Vector Storage Uncompressed,4.88,MB,100k vectors 128D
+Vector Storage Compressed (PQ),0.08,MB,Estimated with PQ-ADC
+Compression Ratio,64.00,×,Compression factor

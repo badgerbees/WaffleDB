@@ -97,6 +97,11 @@ impl HNSWEngine {
     pub fn default_config() -> Self {
         HNSWEngine::new(16, 200, 200, DistanceMetric::L2)
     }
+
+    /// Create with custom configuration (useful for testing and experimentation)
+    pub fn with_config(m: usize, ef_construction: usize, ef_search: usize) -> Self {
+        HNSWEngine::new(m, ef_construction, ef_search, DistanceMetric::L2)
+    }
 }
 
 impl VectorEngine for HNSWEngine {

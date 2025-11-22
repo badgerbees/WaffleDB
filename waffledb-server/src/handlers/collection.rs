@@ -9,9 +9,10 @@ pub async fn handle_create_collection(
     engine: &EngineState,
     req: CreateCollectionRequest,
 ) -> Result<CreateCollectionResponse, String> {
-    // Parse engine type from request (default to HNSW)
+    // Parse engine type from request (default to Hybrid)
     let engine_type = match req.engine.as_deref() {
-        Some("hnsw") | _ => EngineType::HNSW,
+        Some("hnsw") => EngineType::HNSW,
+        Some("hybrid") | _ => EngineType::Hybrid,
     };
 
     match engine.create_collection_with_engine(req.name.clone(), req.dimension, engine_type, req.duplicate_policy.clone()) {

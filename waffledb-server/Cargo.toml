@@ -23,6 +23,7 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 lazy_static = "1.4"
 tonic = "0.10"
 prost = "0.12"
+parking_lot = "0.12"
 
 [build-dependencies]
 tonic-build = "0.10"

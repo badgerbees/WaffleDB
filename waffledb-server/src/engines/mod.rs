@@ -1,30 +1,35 @@
 /// Engine factory and type system.
 /// 
 /// Provides pluggable engine creation and selection logic.
-/// Currently supports HNSW. Future: IVF, PQ, Custom.
+/// Currently supports HNSW and Hybrid. Future: IVF, PQ, Custom.
 
 pub mod hnsw_engine;
+pub mod hybrid_engine;
 
 use std::sync::Mutex;
 pub use crate::engines::hnsw_engine::HNSWEngine;
+pub use crate::engines::hybrid_engine::HybridEngine;
 use waffledb_core::{VectorEngine, Result};
 
 /// Engine type enumeration for engine selection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EngineType {
     HNSW,
+    Hybrid,
 }
 
 impl EngineType {
     pub fn as_str(&self) -> &'static str {
         match self {
             EngineType::HNSW => "hnsw",
+            EngineType::Hybrid => "hybrid",
         }
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "hnsw" => Some(EngineType::HNSW),
+            "hybrid" => Some(EngineType::Hybrid),
             _ => None,
         }
     }
@@ -34,6 +39,7 @@ impl EngineType {
 pub fn create_engine(engine_type: EngineType) -> Result<Box<dyn VectorEngine>> {
     match engine_type {
         EngineType::HNSW => Ok(Box::new(HNSWEngine::default_config())),
+        EngineType::Hybrid => Ok(Box::new(HybridEngine::new())),
     }
 }
 

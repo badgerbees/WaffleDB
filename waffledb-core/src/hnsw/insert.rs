@@ -104,8 +104,8 @@ impl HNSWInserter {
         ef: usize,
     ) -> Vec<(usize, f32)> {
         let mut visited = HashSet::new();
-        let mut candidates = vec![];
-        let mut nearest = vec![];
+        let mut candidates: Vec<(usize, f32)> = vec![];
+        let mut nearest: Vec<(usize, f32)> = vec![];
 
         if let Some(ep_vec) = get_vector(entry_point) {
             let dist = distance_fn(query, &ep_vec);
@@ -115,11 +115,21 @@ impl HNSWInserter {
         }
 
         while !candidates.is_empty() {
-            candidates.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-            let (current, current_dist) = candidates.remove(0);
+            // Find minimum without full sort - O(n) instead of O(n log n)
+            let min_idx = candidates
+                .iter()
+                .enumerate()
+                .min_by(|(_, a), (_, b)| a.1.partial_cmp(&b.1).unwrap())
+                .map(|(idx, _)| idx)
+                .unwrap_or(0);
+            
+            let (current, current_dist) = candidates.swap_remove(min_idx);
 
-            if current_dist > nearest.iter().map(|(_, d)| *d).fold(f32::NEG_INFINITY, f32::max) {
-                break;
+            // Check stopping condition
+            if let Some(max_dist) = nearest.iter().map(|(_, d)| *d).max_by(|a, b| a.partial_cmp(b).unwrap()) {
+                if current_dist > max_dist {
+                    break;
+                }
             }
 
             if let Some(neighbors) = index.get_neighbors(current, level) {
@@ -128,14 +138,22 @@ impl HNSWInserter {
                         visited.insert(neighbor);
                         if let Some(neighbor_vec) = get_vector(neighbor) {
                             let dist = distance_fn(query, &neighbor_vec);
-                            if dist < nearest.iter().map(|(_, d)| *d).fold(f32::INFINITY, f32::min)
-                                || nearest.len() < ef
-                            {
+                            let max_nearest = nearest.iter().map(|(_, d)| *d).max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap_or(f32::INFINITY);
+                            
+                            if dist < max_nearest || nearest.len() < ef {
                                 candidates.push((neighbor, dist));
                                 nearest.push((neighbor, dist));
-                                nearest.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+                                
+                                // Keep only top ef results efficiently
                                 if nearest.len() > ef {
-                                    nearest.pop();
+                                    // Find and remove max
+                                    let max_idx = nearest
+                                        .iter()
+                                        .enumerate()
+                                        .max_by(|(_, a), (_, b)| a.1.partial_cmp(&b.1).unwrap())
+                                        .map(|(idx, _)| idx)
+                                        .unwrap();
+                                    nearest.swap_remove(max_idx);
                                 }
                             }
                         }
