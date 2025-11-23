@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use std::fs::{self, File};
 use std::io::{Write, Read, BufReader, BufWriter};
 use serde::{Serialize, Deserialize};
-use crate::errors::Result;
+use crate::core::errors::{Result, WaffleError, ErrorCode};
 use crate::hnsw::graph::HNSWIndex;
 
 /// Index state machine for crash-safe recovery
@@ -87,15 +87,17 @@ impl IndexPersistence {
     pub fn new(base_dir: &Path) -> Result<Self> {
         // Create base directory and subdirectories
         fs::create_dir_all(base_dir)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to create base dir: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to create base dir: {}", e)
+            })?;
 
         let snapshots_dir = base_dir.join("snapshots");
         fs::create_dir_all(&snapshots_dir)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to create snapshots dir: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to create snapshots dir: {}", e)
+            })?;
 
         let state_file = base_dir.join("state.json");
 
@@ -157,9 +159,10 @@ impl IndexPersistence {
     pub fn save_snapshot(&mut self, snapshot: &HNSWSnapshot) -> Result<(u64, u32)> {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to get timestamp: {}", e)
-            ))?
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to get timestamp: {}", e)
+            })?
             .as_secs();
 
         let version = self.get_next_version()?;
@@ -168,15 +171,17 @@ impl IndexPersistence {
 
         // Write snapshot to file
         let file = File::create(&filepath)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to create snapshot file: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to create snapshot file: {}", e)
+            })?;
 
         let writer = BufWriter::new(file);
         bincode::serialize_into(writer, snapshot)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to serialize snapshot: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to serialize snapshot: {}", e)
+            })?;
 
         // Update state file
         self.mark_ready(timestamp, version)?;
@@ -207,15 +212,17 @@ impl IndexPersistence {
 
         // Load and deserialize snapshot
         let file = File::open(&filepath)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to open snapshot: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to open snapshot: {}", e)
+            })?;
 
         let reader = BufReader::new(file);
         let snapshot = bincode::deserialize_from(reader)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to deserialize snapshot: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to deserialize snapshot: {}", e)
+            })?;
 
         Ok(Some(snapshot))
     }
@@ -229,15 +236,17 @@ impl IndexPersistence {
         }
 
         let entries = fs::read_dir(&self.snapshots_dir)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to read snapshots dir: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to read snapshots dir: {}", e)
+            })?;
 
         for entry in entries {
             let entry = entry
-                .map_err(|e| crate::errors::WaffleError::StorageError(
-                    format!("Failed to read dir entry: {}", e)
-                ))?;
+                .map_err(|e| WaffleError::StorageError {
+                    code: ErrorCode::StorageIOError,
+                    message: format!("Failed to read dir entry: {}", e)
+                })?;
 
             let path = entry.path();
             if path.is_file() && path.extension().map_or(false, |ext| ext == "bin") {
@@ -272,9 +281,10 @@ impl IndexPersistence {
         // Remove oldest snapshots
         for (_timestamp, _version, path) in snapshots.iter().skip(keep_count) {
             fs::remove_file(path)
-                .map_err(|e| crate::errors::WaffleError::StorageError(
-                    format!("Failed to remove old snapshot: {}", e)
-                ))?;
+                .map_err(|e| WaffleError::StorageError {
+                    code: ErrorCode::StorageIOError,
+                    message: format!("Failed to remove old snapshot: {}", e)
+                })?;
         }
 
         Ok(())
@@ -301,9 +311,10 @@ impl IndexPersistence {
         let metadata = IndexMetadata {
             timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .map_err(|e| crate::errors::WaffleError::StorageError(
-                    format!("Failed to get timestamp: {}", e)
-                ))?
+                .map_err(|e| WaffleError::StorageError {
+                    code: ErrorCode::StorageIOError,
+                    message: format!("Failed to get timestamp: {}", e)
+                })?
                 .as_secs(),
             version: 1,
             num_nodes,
@@ -346,20 +357,23 @@ impl IndexPersistence {
     /// Helper: Load state file
     fn load_state_file(path: &Path) -> Result<StateFile> {
         let mut file = File::open(path)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to open state file: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to open state file: {}", e)
+            })?;
 
         let mut contents = String::new();
         file.read_to_string(&mut contents)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to read state file: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to read state file: {}", e)
+            })?;
 
         serde_json::from_str(&contents)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to parse state file: {}", e)
-            ))
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to parse state file: {}", e)
+            })
     }
 
     /// Helper: Save state file
@@ -378,26 +392,30 @@ impl IndexPersistence {
         };
 
         let json = serde_json::to_string(&state_data)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to serialize state: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to serialize state: {}", e)
+            })?;
 
         // Write with fsync for durability
         let file = File::create(&self.state_file)
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to create state file: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to create state file: {}", e)
+            })?;
 
         let mut file = file;
         file.write_all(json.as_bytes())
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to write state file: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to write state file: {}", e)
+            })?;
 
         file.sync_all()
-            .map_err(|e| crate::errors::WaffleError::StorageError(
-                format!("Failed to sync state file: {}", e)
-            ))?;
+            .map_err(|e| WaffleError::StorageError {
+                code: ErrorCode::StorageIOError,
+                message: format!("Failed to sync state file: {}", e)
+            })?;
 
         Ok(())
     }

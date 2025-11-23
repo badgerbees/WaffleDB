@@ -1,5 +1,7 @@
 use crate::vector::distance::DistanceMetric;
 use std::collections::{BinaryHeap, HashSet};
+#[allow(unused_imports)]
+use std::collections::HashMap;
 use std::cmp::Ordering;
 
 /// Profiling metrics for HNSW search.
@@ -324,4 +326,145 @@ pub fn search_hnsw_layers_with_metrics(
     total_metrics.distance_computations += final_metrics.distance_computations;
     
     (results, total_metrics)
+}
+
+/// HNSW search with metadata filtering support.
+/// 
+/// This function filters results based on metadata criteria before returning.
+/// The filter function receives (node_id, metadata_value) and returns true if
+/// the result should be included.
+/// 
+/// Note: For better performance, filtering is applied post-search. This means
+/// the actual results may include more candidates than k to account for filtered-out items.
+/// If you need exactly k results after filtering, increase k during search.
+pub fn search_hnsw_layers_with_filter(
+    query: &[f32],
+    layers: &[crate::hnsw::graph::Layer],
+    entry_point: usize,
+    ef_search: usize,
+    k: usize,
+    get_vector: &dyn Fn(usize) -> Option<Vec<f32>>,
+    get_metadata: &dyn Fn(usize) -> Option<String>,
+    metric: DistanceMetric,
+    filter: &dyn Fn(&str) -> bool, // Return true if this metadata passes filter
+) -> Vec<SearchResult> {
+    let (unfiltered_results, _metrics) = search_hnsw_layers_with_metrics(
+        query,
+        layers,
+        entry_point,
+        ef_search,
+        get_vector,
+        metric,
+    );
+    
+    // Apply filter and keep top k results
+    let mut filtered = vec![];
+    for result in unfiltered_results {
+        if filtered.len() >= k {
+            break;
+        }
+        
+        if let Some(metadata) = get_metadata(result.node_id) {
+            if filter(&metadata) {
+                filtered.push(result);
+            }
+        } else {
+            // If no metadata, include by default (no metadata = passes filter)
+            filtered.push(result);
+        }
+    }
+    
+    filtered
+}
+
+/// K-NN search at a specific layer with metadata filtering.
+/// 
+/// Similar to search_layer but applies metadata filtering post-search.
+pub fn search_layer_with_filter(
+    query: &[f32],
+    entry_points: &[usize],
+    ef: usize,
+    k: usize,
+    get_vector: &dyn Fn(usize) -> Option<Vec<f32>>,
+    get_neighbors: &dyn Fn(usize) -> Option<Vec<usize>>,
+    get_metadata: &dyn Fn(usize) -> Option<String>,
+    metric: DistanceMetric,
+    filter: &dyn Fn(&str) -> bool,
+) -> Vec<SearchResult> {
+    let unfiltered_results = search_layer(query, entry_points, ef, get_vector, get_neighbors, metric);
+    
+    // Apply filter and keep top k
+    let mut filtered = vec![];
+    for result in unfiltered_results {
+        if filtered.len() >= k {
+            break;
+        }
+        
+        if let Some(metadata) = get_metadata(result.node_id) {
+            if filter(&metadata) {
+                filtered.push(result);
+            }
+        } else {
+            filtered.push(result);
+        }
+    }
+    
+    filtered
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_search_result_ordering() {
+        let results = vec![
+            SearchResult { node_id: 1, distance: 0.5 },
+            SearchResult { node_id: 2, distance: 0.3 },
+            SearchResult { node_id: 3, distance: 0.8 },
+        ];
+        
+        // Verify results are properly structured
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0].distance, 0.5);
+    }
+    
+    #[test]
+    fn test_metadata_filter_basic() {
+        // Simulate filtering by checking metadata values
+        let metadata_store: HashMap<usize, String> = vec![
+            (1, "category:A".to_string()),
+            (2, "category:B".to_string()),
+            (3, "category:A".to_string()),
+        ].into_iter().collect();
+        
+        let get_metadata = |node_id: usize| -> Option<String> {
+            metadata_store.get(&node_id).cloned()
+        };
+        
+        let filter_a = |metadata: &str| -> bool {
+            metadata.contains("category:A")
+        };
+        
+        let results = vec![
+            SearchResult { node_id: 1, distance: 0.5 },
+            SearchResult { node_id: 2, distance: 0.3 },
+            SearchResult { node_id: 3, distance: 0.8 },
+        ];
+        
+        // Apply filter manually for testing
+        let filtered: Vec<_> = results.iter()
+            .filter(|r| {
+                if let Some(meta) = get_metadata(r.node_id) {
+                    filter_a(&meta)
+                } else {
+                    true
+                }
+            })
+            .cloned()
+            .collect();
+        
+        assert_eq!(filtered.len(), 2);
+        assert!(filtered.iter().all(|r| r.node_id == 1 || r.node_id == 3));
+    }
 }

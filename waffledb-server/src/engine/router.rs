@@ -1,6 +1,7 @@
 use crate::engine::state::EngineState;
 use waffledb_core::vector::types::Vector;
 use waffledb_core::metadata::schema::Metadata;
+use waffledb_core::core::errors::ErrorCode;
 
 /// Central request router.
 pub struct RequestRouter {
@@ -52,7 +53,10 @@ impl RequestRouter {
         let collections = self.engine.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
         let mut meta_store = collection.vector_metadata.write().unwrap();
         meta_store.insert(id, metadata);

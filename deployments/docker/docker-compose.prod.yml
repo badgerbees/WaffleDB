@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  waffledb:
+    image: waffledb/waffledb:latest
+    container_name: waffledb-server
+    ports:
+      - "8080:8080"      # REST API
+      - "50051:50051"    # gRPC
+    environment:
+      RUST_LOG: info
+      WAFFLEDB_DATA_DIR: /data
+      WAFFLEDB_PORT: 8080
+      WAFFLEDB_GRPC_PORT: 50051
+    volumes:
+      - waffledb_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - waffledb_network
+    restart: unless-stopped
+
+volumes:
+  waffledb_data:
+    driver: local
+
+networks:
+  waffledb_network:
+    driver: bridge

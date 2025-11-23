@@ -218,8 +218,8 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // FIXME: ADC distance calculation needs verification
     fn test_adc_distance_simd() {
+        // Test 1: Simple case with known lookup values
         let codes = vec![0, 1, 2, 3];
         let lookup_table = vec![
             vec![1.0, 2.0, 3.0],
@@ -229,9 +229,20 @@ mod tests {
         ];
         
         let dist = adc_distance_simd(&codes, &lookup_table);
-        // For debugging: let's check what value we get
-        println!("ADC distance result: {}", dist);
-        // Just verify it's a reasonable distance
-        assert!(dist >= 0.0 && dist < 10.0);
+        // Expected: sqrt(1.0 + 1.5 + 0.1 + 0.05) = sqrt(2.65) ≈ 1.628
+        let expected = (1.0f32 + 1.5f32 + 0.1f32 + 0.05f32).sqrt();
+        assert!((dist - expected).abs() < 0.05, "ADC distance {} does not match expected {}", dist, expected);
+        
+        // Test 2: Zero codes
+        let codes_zero = vec![0, 0, 0, 0];
+        let dist_zero = adc_distance_simd(&codes_zero, &lookup_table);
+        let expected_zero = (1.0f32 + 0.5f32 + 0.1f32 + 0.05f32).sqrt();
+        assert!((dist_zero - expected_zero).abs() < 0.01);
+        
+        // Test 3: Max codes
+        let codes_max = vec![2, 2, 2, 2];
+        let dist_max = adc_distance_simd(&codes_max, &lookup_table);
+        let expected_max = (3.0f32 + 2.5f32 + 0.3f32 + 0.15f32).sqrt();
+        assert!((dist_max - expected_max).abs() < 0.01);
     }
 }

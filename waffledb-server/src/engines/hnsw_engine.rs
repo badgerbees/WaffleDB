@@ -275,7 +275,7 @@ impl VectorEngine for HNSWEngine {
             // For now, we mark as deleted in the vector map.
             // A background compaction task could rebuild the graph periodically.
         } else {
-            return Err(waffledb_core::WaffleError::NotFound);
+            return Err(waffledb_core::WaffleError::NotFound(format!("Vector '{}' not found in index", id)));
         }
 
         let elapsed_us = start.elapsed().as_micros() as u64;

@@ -13,7 +13,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use parking_lot::RwLock;
 use crate::vector::types::Vector;
 use crate::metadata::schema::Metadata;
-use crate::errors::{WaffleError, Result};
+use crate::core::errors::{WaffleError, Result, ErrorCode};
 
 /// A single vector entry in the buffer
 #[derive(Debug, Clone)]
@@ -76,7 +76,7 @@ impl WriteBuffer {
     pub fn push(&self, id: String, vector: Vector, metadata: Metadata) -> Result<()> {
         // Fast check without locking if we're building
         if self.is_building.load(Ordering::Acquire) {
-            return Err(WaffleError::StorageError("Buffer is currently building HNSW".to_string()));
+            return Err(WaffleError::StorageError { code: ErrorCode::StorageIOError, message: "Buffer is currently building HNSW".to_string() });
         }
 
         // Acquire write lock
@@ -84,7 +84,7 @@ impl WriteBuffer {
 
         // Check capacity
         if entries.len() >= self.capacity {
-            return Err(WaffleError::StorageError("Buffer at capacity".to_string()));
+            return Err(WaffleError::StorageError { code: ErrorCode::StorageIOError, message: "Buffer at capacity".to_string() });
         }
 
         entries.push(VectorEntry {
@@ -227,12 +227,38 @@ impl WriteBuffer {
     }
 
     /// Get all entries (immutable, for iteration)
+    /// WARNING: This clones all vectors. For large buffers, prefer using map_entries() instead
     pub fn get_entries(&self) -> Vec<VectorEntry> {
         self.entries
             .read()
             .iter()
             .cloned()
             .collect()
+    }
+    
+    /// Iterate entries without cloning entire buffer (memory-efficient)
+    /// Applies callback to each entry while holding read lock
+    pub fn map_entries<F, R>(&self, mut callback: F) -> Vec<R>
+    where
+        F: FnMut(&VectorEntry) -> R,
+    {
+        self.entries
+            .read()
+            .iter()
+            .map(|entry| callback(entry))
+            .collect()
+    }
+    
+    /// Count entries matching predicate without cloning
+    pub fn count_where<F>(&self, predicate: F) -> usize
+    where
+        F: Fn(&VectorEntry) -> bool,
+    {
+        self.entries
+            .read()
+            .iter()
+            .filter(|entry| predicate(entry))
+            .count()
     }
 
     /// Check if build is in progress

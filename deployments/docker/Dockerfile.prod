@@ -1,0 +1,50 @@
+FROM rust:1.75 as builder
+
+WORKDIR /app
+
+# Copy only manifests first
+COPY Cargo.toml Cargo.lock ./
+
+# Create dummy main to cache dependencies
+RUN mkdir -p waffledb-core/src && \
+    echo "fn main() {}" > waffledb-core/src/main.rs && \
+    cargo build --release 2>&1 | grep -v "warning"
+
+# Copy full source
+COPY . .
+
+# Remove dummy and build for real
+RUN rm waffledb-core/src/main.rs && \
+    cargo build --release 2>&1 | grep -E "error|warning: unused" | head -20 || true
+
+# Runtime stage
+FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libssl3 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app/target/release/waffledb-server /usr/local/bin/waffledb-server
+
+# Create data directory
+RUN mkdir -p /data
+
+# Environment configuration
+ENV RUST_LOG=info
+ENV WAFFLEDB_DATA_DIR=/data
+ENV WAFFLEDB_PORT=8080
+ENV WAFFLEDB_GRPC_PORT=50051
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+EXPOSE 8080 50051
+
+# Run with structured logging
+CMD ["waffledb-server"]

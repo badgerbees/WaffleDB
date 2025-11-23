@@ -2,9 +2,12 @@
 # Rust & Cargo
 # ============================================================================
 /target
+target/
 Cargo.lock
 **/*.rs.bk
 *.rlib
+/build
+build/
 
 # ============================================================================
 # Python
@@ -106,9 +109,11 @@ data/
 tmp/
 temp/
 .tmp/
-*.swp
-*.swo
-*~
+*.wdb
+*.index
+snapshot-*.tar
+backups/
+snapshots/
 
 # ============================================================================
 # Environment & Secrets
@@ -147,12 +152,11 @@ waffledb_data/
 *.index
 snapshot-*.tar
 backups/
-
-/data
-*.db
-*.sqlite
-backups/
 snapshots/
 
 # Logs
 *.log
+
+# macOS
+.AppleDouble
+.LSOverride

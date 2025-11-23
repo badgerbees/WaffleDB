@@ -1,7 +1,6 @@
 use crate::engine::state::EngineState;
 use crate::api::models::{InsertRequest, InsertResponse, BatchInsertRequest, BatchInsertResponse};
 use waffledb_core::vector::types::Vector;
-use waffledb_core::metadata::schema::Metadata;
 use std::time::Instant;
 use rayon::prelude::*;
 use tracing::{info, error, debug, instrument};
@@ -69,42 +68,51 @@ pub async fn handle_insert(
     }
 }
 
-/// Handle batch insert request with parallel processing for 20x+ performance improvement
+/// Handle batch insert request with deterministic processing
+/// 
+/// Maintains insertion order for consistency with duplicate policies
+/// Parallel vector preparation while maintaining sequential insertion
 pub async fn handle_batch_insert(
     engine: &EngineState,
     collection: String,
     req: BatchInsertRequest,
 ) -> waffledb_core::Result<BatchInsertResponse> {
     let batch_size = req.vectors.len();
-    info!(batch_size, collection = %collection, "Starting parallel batch insert");
+    info!(batch_size, collection = %collection, "Starting batch insert (deterministic)");
     let start = Instant::now();
     
-    // Use rayon for parallel processing - prepare vectors in parallel
-    let results: Vec<_> = req
+    // Prepare vectors in parallel (non-blocking)
+    let prepared: Vec<_> = req
         .vectors
         .into_par_iter()
-        .map(|insert_req| {
+        .enumerate()
+        .map(|(idx, insert_req)| {
             let id = insert_req.id.unwrap_or_else(|| {
                 use std::time::{SystemTime, UNIX_EPOCH};
                 let duration = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap_or_default();
-                format!("vec_{}", duration.as_nanos())
+                // Include original index to maintain deterministic order
+                format!("vec_{}_{}", idx, duration.as_nanos())
             });
 
             let vector = Vector::new(insert_req.vector);
-            // Normalize metadata: convert all types to strings
             let metadata = normalize_metadata(insert_req.metadata);
 
-            (id, vector, metadata)
+            (idx, id, vector, metadata)
         })
         .collect();
+    
+    // Sort by original index to maintain deterministic insertion order
+    let mut sorted = prepared;
+    sorted.sort_by_key(|item| item.0);
 
     let mut inserted = 0;
     let mut errors = vec![];
 
-    // Process all prepared vectors
-    for (id, vector, metadata) in results {
+    // Process all vectors sequentially for determinism
+    // This ensures duplicate policies (reject/overwrite/skip) work consistently
+    for (_idx, id, vector, metadata) in sorted {
         debug!(vector_id = %id, "Inserting vector from batch");
         match engine.insert(&collection, id.clone(), vector, metadata) {
             Ok(()) => {

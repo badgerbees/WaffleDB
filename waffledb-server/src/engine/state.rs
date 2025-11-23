@@ -1,5 +1,6 @@
 use waffledb_core::vector::types::Vector;
 use waffledb_core::metadata::schema::Metadata;
+use waffledb_core::core::errors::ErrorCode;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock, atomic::{AtomicU64, AtomicUsize}};
 use serde::{Serialize, Deserialize};
@@ -81,7 +82,10 @@ impl EngineState {
     pub fn create_collection_with_engine(&self, name: String, dimension: usize, engine_type: crate::engines::EngineType, duplicate_policy: String) -> waffledb_core::Result<()> {
         let mut collections = self.collections.write().unwrap();
         if collections.contains_key(&name) {
-            return Err(waffledb_core::WaffleError::StorageError(format!("Collection '{}' already exists", name)));
+            return Err(waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' already exists", name)
+            });
         }
 
         let now = std::time::SystemTime::now()
@@ -122,7 +126,10 @@ impl EngineState {
     pub fn delete_collection(&self, name: &str) -> waffledb_core::Result<()> {
         let mut collections = self.collections.write().unwrap();
         if !collections.contains_key(name) {
-            return Err(waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", name)));
+            return Err(waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", name)
+            });
         }
         collections.remove(name);
         Ok(())
@@ -133,7 +140,10 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", name)
+            })?;
 
         let mut metadata = collection.metadata.clone();
         metadata.vector_count = collection.engine.len();
@@ -176,6 +186,7 @@ impl EngineState {
     }
 
     /// Insert a vector into a collection using the pluggable engine
+    /// Validates vector dimension matches collection dimension
     pub fn insert(
         &self,
         collection_name: &str,
@@ -183,17 +194,31 @@ impl EngineState {
         vector: Vector,
         metadata: Option<Metadata>,
     ) -> waffledb_core::Result<()> {
-        let collections = self.collections.read().unwrap();
+        let collections = self.collections.read()
+            .map_err(|_| waffledb_core::WaffleError::LockPoisoned(
+                "Failed to read collections lock".to_string()))?;
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::CollectionNotFound(collection_name.to_string()))?;
+
+        // Validate vector dimension matches collection dimension
+        let vector_dim = vector.dim();
+        let expected_dim = collection.metadata.dimension;
+        if vector_dim != expected_dim {
+            return Err(waffledb_core::WaffleError::VectorDimensionMismatch {
+                expected: expected_dim,
+                got: vector_dim,
+            });
+        }
 
         // Insert into the engine (REAL HNSW with graph connectivity)
         collection.engine.insert(id.clone(), vector)?;
 
         // Store metadata separately
         if let Some(meta) = metadata {
-            let mut metadata_store = collection.vector_metadata.write().unwrap();
+            let mut metadata_store = collection.vector_metadata.write()
+                .map_err(|_| waffledb_core::WaffleError::LockPoisoned(
+                    "Failed to write metadata lock".to_string()))?;
             metadata_store.insert(id, meta);
         }
 
@@ -205,9 +230,12 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
-        collection.engine.get(id).ok_or(waffledb_core::WaffleError::NotFound)
+        collection.engine.get(id).ok_or(waffledb_core::WaffleError::NotFound("Vector not found".to_string()))
     }
 
     /// Get metadata from a collection
@@ -215,13 +243,16 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
         let metadata = collection.vector_metadata.read().unwrap();
         metadata
             .get(id)
             .cloned()
-            .ok_or_else(|| waffledb_core::WaffleError::NotFound)
+            .ok_or_else(|| waffledb_core::WaffleError::NotFound("Metadata not found".to_string()))
     }
 
     /// Delete a vector from a collection
@@ -229,7 +260,10 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
         // Delete from engine
         collection.engine.delete(id)?;
@@ -252,7 +286,10 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
         let duplicate_policy = collection.metadata.duplicate_policy.as_str();
         
@@ -260,7 +297,10 @@ impl EngineState {
         let exists = collection.engine.get(&id).is_some();
         
         if exists && duplicate_policy == "reject" {
-            return Err(waffledb_core::WaffleError::StorageError(format!("Vector '{}' already exists (duplicate policy: reject)", id)));
+            return Err(waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Vector '{}' already exists (duplicate policy: reject)", id)
+            });
         }
 
         // Delete existing if overwrite policy
@@ -293,7 +333,10 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
         // Delete old vector
         collection.engine.delete(&id)?;
@@ -321,7 +364,10 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
         let mut metadata_store = collection.vector_metadata.write().unwrap();
         
@@ -341,7 +387,10 @@ impl EngineState {
         let collections = self.collections.read().unwrap();
         let collection = collections
             .get(collection_name)
-            .ok_or_else(|| waffledb_core::WaffleError::StorageError(format!("Collection '{}' not found", collection_name)))?;
+            .ok_or_else(|| waffledb_core::WaffleError::StorageError { 
+                code: ErrorCode::StorageIOError,
+                message: format!("Collection '{}' not found", collection_name)
+            })?;
 
         // Use the engine's search implementation (REAL HNSW with layer descent)
         let results = collection.engine.search(query, top_k)?;

@@ -6,7 +6,7 @@
 pub mod hnsw_engine;
 pub mod hybrid_engine;
 
-use std::sync::Mutex;
+use std::sync::{RwLock, Arc};
 pub use crate::engines::hnsw_engine::HNSWEngine;
 pub use crate::engines::hybrid_engine::HybridEngine;
 use waffledb_core::{VectorEngine, Result};
@@ -43,46 +43,62 @@ pub fn create_engine(engine_type: EngineType) -> Result<Box<dyn VectorEngine>> {
     }
 }
 
-/// Thread-safe engine wrapper for concurrent access.
+/// Thread-safe engine wrapper with RwLock for concurrent reads
+/// Allows multiple concurrent readers while serializing writers
 pub struct EngineWrapper {
-    engine: Mutex<Box<dyn VectorEngine>>,
+    engine: Arc<RwLock<Box<dyn VectorEngine>>>,
 }
 
 impl EngineWrapper {
     pub fn new(engine_type: EngineType) -> Result<Self> {
         let engine = create_engine(engine_type)?;
         Ok(EngineWrapper {
-            engine: Mutex::new(engine),
+            engine: Arc::new(RwLock::new(engine)),
         })
     }
 
     pub fn insert(&self, id: String, vector: waffledb_core::Vector) -> Result<()> {
-        let mut engine = self.engine.lock().unwrap();
+        let mut engine = self.engine.write()
+            .map_err(|e| waffledb_core::WaffleError::LockPoisoned(
+                format!("Engine write lock poisoned during insert: {}", e)))?;
         engine.insert(id, vector)
     }
 
     pub fn search(&self, query: &[f32], top_k: usize) -> Result<Vec<waffledb_core::EngineSearchResult>> {
-        let engine = self.engine.lock().unwrap();
+        let engine = self.engine.read()
+            .map_err(|e| waffledb_core::WaffleError::LockPoisoned(
+                format!("Engine read lock poisoned during search: {}", e)))?;
         engine.search(query, top_k)
     }
 
     pub fn delete(&self, id: &str) -> Result<()> {
-        let mut engine = self.engine.lock().unwrap();
+        let mut engine = self.engine.write()
+            .map_err(|e| waffledb_core::WaffleError::LockPoisoned(
+                format!("Engine write lock poisoned during delete: {}", e)))?;
         engine.delete(id)
     }
 
     pub fn get(&self, id: &str) -> Option<waffledb_core::Vector> {
-        let engine = self.engine.lock().unwrap();
-        engine.get(id)
+        self.engine.read()
+            .ok()
+            .and_then(|engine| engine.get(id))
     }
 
     pub fn len(&self) -> usize {
-        let engine = self.engine.lock().unwrap();
-        engine.len()
+        self.engine.read()
+            .map(|engine| engine.len())
+            .unwrap_or(0)
     }
 
     pub fn stats(&self) -> waffledb_core::EngineStats {
-        let engine = self.engine.lock().unwrap();
-        engine.stats()
+        self.engine.read()
+            .map(|engine| engine.stats())
+            .unwrap_or_else(|_| waffledb_core::EngineStats {
+                total_inserts: 0,
+                total_searches: 0,
+                total_deletes: 0,
+                avg_insert_ms: 0.0,
+                avg_search_ms: 0.0,
+            })
     }
 }

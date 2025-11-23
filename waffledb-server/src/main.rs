@@ -3,6 +3,7 @@ mod api;
 mod handlers;
 mod engine;
 mod engines;
+mod engine_config;
 mod logging;
 mod middleware;
 mod metrics;
