@@ -1,37 +1,32 @@
 # WaffleDB
 
-**A high-performance, distributed vector database built in Rust.**
+**A lightweight, fast vector database written in Rust. Deploy it, forget about it.**
 
-WaffleDB is an open-source vector database optimized for semantic search, RAG systems, and AI applications. Built with async Rust and Actix-web, it delivers sub-10ms latency with HNSW indexing, hybrid search, and enterprise features like multi-tenancy and distributed deployment.
+WaffleDB is a vector database built to be simple and small. Single binary, no dependencies, runs on a laptop. Great for semantic search, retrieval systems, and anything that needs to store and search vectors quickly.
 
 [Website](https://waffledb.io) • [Docs](./docs) • [Discord](#) • [GitHub Issues](https://github.com/waffledb/waffledb)
 
 ---
 
-## Features
+## Why WaffleDB?
 
-- **⚡ Ultra-Low Latency** - P99 <10ms vector operations with HNSW indexing
-- **🚀 Zero Setup** - Single binary, no external dependencies, auto-collection creation
-- **📦 Production Ready** - Multi-tenancy, RAFT-based replication, snapshots, and WAL
-- **🔄 Hybrid Search** - Combine vector + keyword search in a single query
-- **🐍 Official SDKs** - Python, JavaScript, Rust with type safety
-- **📊 Observable** - Built-in metrics, health checks, and observability
-- **🔐 Secure by Default** - Multi-tenancy isolation, API keys for cloud
+- **Tiny** - Single binary, 5MB. No Docker, no cluster, no dependencies.
+- **Fast** - Sub-10ms vector search. HNSW indexing built-in.
+- **Simple** - Zero config. Collections auto-create. Works immediately.
+- **Solid** - RAFT replication, snapshots, and multi-tenancy when you need it.
 
 ---
 
-## Quick Start
+## Get Started
 
-### Start Server
+### Run the server
 
 ```bash
-# Compile from source
 cargo build --release
 ./target/release/waffledb-server
-
-# Or use Docker
-docker run -p 8080:8080 waffledb/waffledb:latest
 ```
+
+It listens on `http://localhost:8080`.
 
 ### Python SDK
 
@@ -40,101 +35,76 @@ from waffledb import WaffleClient
 
 client = WaffleClient("http://localhost:8080")
 
-# Add vectors (collection auto-creates!)
+# Add some vectors
 client.add(
-    "my_collection",
-    ids=["doc1", "doc2"],
-    embeddings=[[0.1]*384, [0.2]*384],
-    metadata=[{"title": "Intro"}, {"title": "Advanced"}]
+    "products",
+    ids=["item1", "item2"],
+    embeddings=[[0.1, 0.2, ...], [0.3, 0.4, ...]],
+    metadata=[{"name": "Widget"}, {"name": "Gadget"}]
 )
 
 # Search
-results = client.search("my_collection", [0.15]*384, limit=5)
-for r in results:
-    print(f"ID: {r.id}, Score: {r.score:.4f}")
+results = client.search("products", [0.15, 0.25, ...], limit=10)
+print(results)
 ```
 
-Install: `pip install waffledb`
+`pip install waffledb`
 
 ### REST API
 
 ```bash
-# Add vectors
-curl -X POST http://localhost:8080/collections/my_collection/add \
+curl -X POST http://localhost:8080/collections/products/add \
   -H "Content-Type: application/json" \
   -d '{
-    "ids": ["doc1", "doc2"],
-    "embeddings": [[0.1, 0.2, ...], [0.3, 0.4, ...]],
-    "metadata": [{"title": "Intro"}, {"title": "Advanced"}]
-  }'
-
-# Search
-curl -X POST http://localhost:8080/collections/my_collection/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "embedding": [0.15, 0.25, ...],
-    "limit": 5
+    "ids": ["item1", "item2"],
+    "embeddings": [[0.1, 0.2], [0.3, 0.4]],
+    "metadata": [{"name": "Widget"}, {"name": "Gadget"}]
   }'
 ```
 
 ---
 
-## Architecture
+## How it works
 
-WaffleDB consists of three main components:
+WaffleDB is built from three pieces:
 
-- **waffledb-core** - HNSW indexing, vector operations, and storage engine
-- **waffledb-server** - Actix-web REST API and multi-tenancy layer
-- **waffledb-distributed** - RAFT replication and distributed deployment
-
-See [`/docs/architecture`](./docs) for detailed architecture documentation.
+- **waffledb-core** - Vector indexing and search (HNSW)
+- **waffledb-server** - REST API and multi-tenant support
+- **waffledb-distributed** - RAFT replication for clustering (optional)
 
 ---
 
-## Development
-
-### Build
+## Build & Test
 
 ```bash
+# Build
 cargo build --release
-```
 
-### Run Tests
-
-```bash
+# Run tests
 cargo test --release
-```
 
-### Run Benchmarks
-
-```bash
+# Run benchmarks
 cargo bench
 ```
 
 ---
 
-## Documentation
+## Docs
 
-Full documentation, architecture guides, and benchmarking results are in [`/docs`](./docs).
+Full documentation and architecture guides are in the [`/docs`](./docs) folder.
 
-For a separate docs website, see [waffledb-docs](https://github.com/waffledb/waffledb-docs).
+For a separate docs website, check out [waffledb-docs](https://github.com/waffledb/waffledb-docs).
 
 ---
 
 ## License
 
-AGPL-3.0 License. See [LICENSE](./LICENSE) for details.
+AGPL-3.0. See [LICENSE](./LICENSE).
 
 ---
 
-## Contributing
+## Questions?
 
-Contributions are welcome! Please read our contributing guidelines and submit pull requests to our [GitHub](https://github.com/waffledb/waffledb).
-
----
-
-## Community
-
-- **Discussions** - GitHub Discussions
-- **Issues** - [GitHub Issues](https://github.com/waffledb/waffledb/issues)
-- **Discord** - Join our community server
+- Open an issue on [GitHub](https://github.com/waffledb/waffledb/issues)
+- Join the community on Discord
+- Check the [Docs](./docs)
