@@ -261,6 +261,73 @@ pub async fn get_stats(
     }
 }
 
+/// GET /collections/{name}/stats/index - Get detailed index statistics
+pub async fn get_index_stats(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+) -> impl Responder {
+    match stats::handle_get_index_stats(engine.as_ref().as_ref(), name.into_inner()).await {
+        Ok(stats_resp) => HttpResponse::Ok().json(stats_resp),
+        Err(e) => handle_error(&format!("{}", e), 404),
+    }
+}
+
+/// GET /collections/{name}/stats/analysis - Analyze collection health
+pub async fn analyze_index(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+) -> impl Responder {
+    match stats::handle_analyze_index(engine.as_ref().as_ref(), name.into_inner()).await {
+        Ok(analysis_resp) => HttpResponse::Ok().json(analysis_resp),
+        Err(e) => handle_error(&format!("{}", e), 404),
+    }
+}
+
+/// GET /collections/{name}/stats/merge-history - Get merge operation history
+pub async fn get_merge_history(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+    query: web::Query<std::collections::HashMap<String, String>>,
+) -> impl Responder {
+    let limit = query.get("limit")
+        .and_then(|l| l.parse::<usize>().ok())
+        .map(Some)
+        .unwrap_or(Some(100));
+
+    match stats::handle_get_merge_history(engine.as_ref().as_ref(), name.into_inner(), limit).await {
+        Ok(history_resp) => HttpResponse::Ok().json(history_resp),
+        Err(e) => handle_error(&format!("{}", e), 404),
+    }
+}
+
+/// GET /collections/{name}/stats/traces - Get query execution traces
+pub async fn get_query_traces(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+    query: web::Query<std::collections::HashMap<String, String>>,
+) -> impl Responder {
+    let limit = query.get("limit")
+        .and_then(|l| l.parse::<usize>().ok())
+        .map(Some)
+        .unwrap_or(Some(50));
+
+    match stats::handle_get_query_traces(engine.as_ref().as_ref(), name.into_inner(), limit).await {
+        Ok(traces_resp) => HttpResponse::Ok().json(traces_resp),
+        Err(e) => handle_error(&format!("{}", e), 404),
+    }
+}
+
+/// GET /collections/{name}/stats/traces/stats - Get query trace statistics
+pub async fn get_query_trace_stats(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+) -> impl Responder {
+    match stats::handle_get_query_trace_stats(engine.as_ref().as_ref(), name.into_inner()).await {
+        Ok(stats_resp) => HttpResponse::Ok().json(stats_resp),
+        Err(e) => handle_error(&format!("{}", e), 404),
+    }
+}
+
 /// GET /health - Server health check
 pub async fn health() -> impl Responder {
     let uptime_seconds = SystemTime::now()
@@ -298,6 +365,144 @@ pub async fn ready(
         Ok(true) => HttpResponse::Ok().json(serde_json::json!({"ready": true})),
         _ => HttpResponse::ServiceUnavailable().json(serde_json::json!({"ready": false})),
     }
+}
+
+// ============================================================================
+// SIMPLE API SHORTCUTS - Auto-create + Insert/Search/Delete (Zero Friction)
+// ============================================================================
+
+/// POST /collections/{name}/add - Add vectors (auto-creates collection if needed)
+pub async fn add(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+    req: web::Json<BatchInsertRequest>,
+) -> impl Responder {
+    let collection_name = name.into_inner();
+    
+    // Validate request
+    if req.vectors.is_empty() {
+        return handle_error(
+            "No vectors provided. Include at least one vector with 'id' and 'vector' fields.",
+            400,
+        );
+    }
+    
+    // Auto-create collection if it doesn't exist
+    // Infer dimension from first vector
+    let dimension = req.vectors[0].vector.len() as u32;
+    
+    if dimension == 0 {
+        return handle_error(
+            "Vector cannot be empty. Provide a non-empty embedding vector.",
+            400,
+        );
+    }
+    
+    // Validate all vectors have same dimension
+    for (i, vec) in req.vectors.iter().enumerate() {
+        if vec.vector.len() as u32 != dimension {
+            return handle_error(
+                &format!(
+                    "Dimension mismatch at vector {}: expected {} but got {}",
+                    i,
+                    dimension,
+                    vec.vector.len()
+                ),
+                400,
+            );
+        }
+    }
+    
+    // Try to create, ignore if already exists
+    let create_req = CreateCollectionRequest {
+        name: collection_name.clone(),
+        dimension: dimension as usize,
+        metric: "l2".to_string(),
+        engine: Some("hnsw".to_string()),
+        m: None,
+        m_l: None,
+        duplicate_policy: "overwrite".to_string(),
+    };
+    
+    let _ = collection::handle_create_collection(engine.as_ref().as_ref(), create_req).await;
+    
+    // Now insert normally
+    match insert::handle_batch_insert(engine.as_ref().as_ref(), collection_name.clone(), req.into_inner()).await {
+        Ok(response) => HttpResponse::Ok().json(response),
+        Err(e) => handle_error(&format!("{}", e), 400),
+    }
+}
+
+/// POST /collections/{name}/search - Search for similar vectors (Simple API)
+pub async fn simple_search(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+    req: web::Json<SimpleSearchRequest>,
+) -> impl Responder {
+    // Validate request
+    if req.embedding.is_empty() {
+        return handle_error(
+            "Embedding cannot be empty. Provide a non-empty query vector in the 'embedding' field.",
+            400,
+        );
+    }
+    
+    if let Some(limit) = req.limit {
+        if limit <= 0 {
+            return handle_error(
+                &format!("Limit must be > 0, got {}", limit),
+                400,
+            );
+        }
+    }
+    
+    let search_req = SearchRequest {
+        vector: req.embedding.clone(),
+        top_k: req.limit.unwrap_or(5),
+        ef_search: None,
+        filter: req.filter.as_ref().map(|f| serde_json::to_value(f).unwrap_or(serde_json::json!({}))),
+        include_metadata: true,
+    };
+    
+    match search::handle_search(engine.as_ref().as_ref(), name.into_inner(), search_req).await {
+        Ok(response) => HttpResponse::Ok().json(response),
+        Err(e) => handle_error(&format!("{}", e), 400),
+    }
+}
+
+/// POST /collections/{name}/delete - Delete vectors (Simple API - Batch)
+pub async fn simple_delete(
+    engine: web::Data<Arc<EngineState>>,
+    name: web::Path<String>,
+    req: web::Json<SimpleDeleteRequest>,
+) -> impl Responder {
+    // Validate request
+    if req.ids.is_empty() {
+        return handle_error(
+            "No IDs provided. Include at least one ID in the 'ids' field to delete.",
+            400,
+        );
+    }
+    
+    let collection = name.into_inner();
+    let mut errors = Vec::new();
+    let mut deleted_count = 0;
+    
+    for id in &req.ids {
+        let delete_req = DeleteRequest { id: id.clone() };
+        match delete::handle_delete(engine.as_ref().as_ref(), collection.clone(), delete_req).await {
+            Ok(_) => deleted_count += 1,
+            Err(e) => errors.push(format!("{}: {}", id, e)),
+        }
+    }
+    
+    let result = serde_json::json!({
+        "deleted_count": deleted_count,
+        "total_requested": req.ids.len(),
+        "errors": if errors.is_empty() { None } else { Some(errors) }
+    });
+    
+    HttpResponse::Ok().json(result)
 }
 
 // ============================================================================

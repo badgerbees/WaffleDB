@@ -1,6 +1,18 @@
 version: '3.8'
 
+# START WITH SINGLE-NODE (DEFAULT)
+# Single-node mode requires NO additional setup - just run:
+#   docker-compose up -d
+#
+# FOR DISTRIBUTED MODE (3-NODE CLUSTER):
+# Uncomment the services below and set:
+#   WAFFLEDB_CLUSTER_MODE=true
+#
+# Then start cluster with:
+#   docker-compose up -d
+
 services:
+  # SINGLE-NODE MODE (uncomment for single-node)
   waffledb:
     build:
       context: ../..
@@ -10,20 +22,138 @@ services:
       - "8080:8080"
       - "9090:9090"
     environment:
-      RUST_LOG: debug
+      # Basic setup
+      RUST_LOG: info
       WAFFLEDB_HOST: 0.0.0.0
       WAFFLEDB_HTTP_PORT: 8080
       WAFFLEDB_GRPC_PORT: 9090
       WAFFLEDB_STORAGE_PATH: /data
+      
+      # Clustering (optional - for distributed mode)
+      # WAFFLEDB_CLUSTER_MODE: "true"
+      # WAFFLEDB_NODE_ID: "node1"
+      # WAFFLEDB_PEERS: "node2:8080,node3:8080"
+      # WAFFLEDB_RAFT_PORT: "9090"
+      # WAFFLEDB_ELECTION_TIMEOUT_MS: "150"
+      # WAFFLEDB_HEARTBEAT_INTERVAL_MS: "50"
     volumes:
       - waffledb_data:/data
     restart: unless-stopped
     networks:
       - waffledb-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # DISTRIBUTED MODE - NODE 1 (uncomment to enable clustering)
+  # node1:
+  #   build:
+  #     context: ../..
+  #     dockerfile: deployments/docker/Dockerfile
+  #   container_name: waffledb-node1
+  #   environment:
+  #     RUST_LOG: info
+  #     WAFFLEDB_HOST: 0.0.0.0
+  #     WAFFLEDB_HTTP_PORT: 8080
+  #     WAFFLEDB_GRPC_PORT: 9090
+  #     WAFFLEDB_STORAGE_PATH: /data
+  #     # Clustering
+  #     WAFFLEDB_CLUSTER_MODE: "true"
+  #     WAFFLEDB_NODE_ID: "node1"
+  #     WAFFLEDB_PEERS: "node2:8080,node3:8080"
+  #     WAFFLEDB_RAFT_PORT: "9090"
+  #     WAFFLEDB_ELECTION_TIMEOUT_MS: "150"
+  #     WAFFLEDB_HEARTBEAT_INTERVAL_MS: "50"
+  #   ports:
+  #     - "8080:8080"
+  #     - "9090:9090"
+  #   volumes:
+  #     - node1_data:/data
+  #   networks:
+  #     - waffledb-net
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #
+  # # NODE 2
+  # node2:
+  #   build:
+  #     context: ../..
+  #     dockerfile: deployments/docker/Dockerfile
+  #   container_name: waffledb-node2
+  #   environment:
+  #     RUST_LOG: info
+  #     WAFFLEDB_HOST: 0.0.0.0
+  #     WAFFLEDB_HTTP_PORT: 8080
+  #     WAFFLEDB_GRPC_PORT: 9090
+  #     WAFFLEDB_STORAGE_PATH: /data
+  #     WAFFLEDB_CLUSTER_MODE: "true"
+  #     WAFFLEDB_NODE_ID: "node2"
+  #     WAFFLEDB_PEERS: "node1:8080,node3:8080"
+  #     WAFFLEDB_RAFT_PORT: "9090"
+  #     WAFFLEDB_ELECTION_TIMEOUT_MS: "150"
+  #     WAFFLEDB_HEARTBEAT_INTERVAL_MS: "50"
+  #   ports:
+  #     - "8081:8080"
+  #     - "9091:9090"
+  #   volumes:
+  #     - node2_data:/data
+  #   networks:
+  #     - waffledb-net
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #
+  # # NODE 3
+  # node3:
+  #   build:
+  #     context: ../..
+  #     dockerfile: deployments/docker/Dockerfile
+  #   container_name: waffledb-node3
+  #   environment:
+  #     RUST_LOG: info
+  #     WAFFLEDB_HOST: 0.0.0.0
+  #     WAFFLEDB_HTTP_PORT: 8080
+  #     WAFFLEDB_GRPC_PORT: 9090
+  #     WAFFLEDB_STORAGE_PATH: /data
+  #     WAFFLEDB_CLUSTER_MODE: "true"
+  #     WAFFLEDB_NODE_ID: "node3"
+  #     WAFFLEDB_PEERS: "node1:8080,node2:8080"
+  #     WAFFLEDB_RAFT_PORT: "9090"
+  #     WAFFLEDB_ELECTION_TIMEOUT_MS: "150"
+  #     WAFFLEDB_HEARTBEAT_INTERVAL_MS: "50"
+  #   ports:
+  #     - "8082:8080"
+  #     - "9092:9090"
+  #   volumes:
+  #     - node3_data:/data
+  #   networks:
+  #     - waffledb-net
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
 
 volumes:
   waffledb_data:
     driver: local
+  # Distributed mode volumes (uncomment when using clustering)
+  # node1_data:
+  #   driver: local
+  # node2_data:
+  #   driver: local
+  # node3_data:
+  #   driver: local
 
 networks:
   waffledb-net:

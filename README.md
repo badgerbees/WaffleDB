@@ -1,82 +1,36 @@
-# WaffleDB: The Fastest, Smallest Vector Database
+# WaffleDB
 
-**Production-ready vector database in a single 5MB binary. Zero external dependencies.**
+**A high-performance, distributed vector database built in Rust.**
 
----
+WaffleDB is an open-source vector database optimized for semantic search, RAG systems, and AI applications. Built with async Rust and Actix-web, it delivers sub-10ms latency with HNSW indexing, hybrid search, and enterprise features like multi-tenancy and distributed deployment.
 
-## Why WaffleDB?
-
-| Feature | WaffleDB | Qdrant | Milvus | Chroma |
-|---------|----------|--------|--------|---------|
-| **Binary Size** | 5MB | 100MB+ | 500MB+ | Requires Python (1GB+) |
-| **Startup Time** | <50ms | 2-5s | 10-30s | 5-15s |
-| **P99 Latency** | <10ms | 50-100ms | 100-500ms | 200-1000ms |
-| **Single Binary** | ✅ | ❌ | ❌ | ❌ |
-| **No Dependencies** | ✅ Rust | ❌ C++ | ❌ C++ | ❌ Python |
-
-**Pick WaffleDB if you want simplicity, speed, and zero operational overhead.**
+[Website](https://waffledb.io) • [Docs](./docs) • [Discord](#) • [GitHub Issues](https://github.com/waffledb/waffledb)
 
 ---
 
-## 60 Seconds to Running
+## Features
+
+- **⚡ Ultra-Low Latency** - P99 <10ms vector operations with HNSW indexing
+- **🚀 Zero Setup** - Single binary, no external dependencies, auto-collection creation
+- **📦 Production Ready** - Multi-tenancy, RAFT-based replication, snapshots, and WAL
+- **🔄 Hybrid Search** - Combine vector + keyword search in a single query
+- **🐍 Official SDKs** - Python, JavaScript, Rust with type safety
+- **📊 Observable** - Built-in metrics, health checks, and observability
+- **🔐 Secure by Default** - Multi-tenancy isolation, API keys for cloud
+
+---
+
+## Quick Start
+
+### Start Server
 
 ```bash
-# Start server
+# Compile from source
+cargo build --release
+./target/release/waffledb-server
+
+# Or use Docker
 docker run -p 8080:8080 waffledb/waffledb:latest
-
-# Insert vectors (Python)
-from waffledb import WaffleClient
-client = WaffleClient("http://localhost:8080")
-client.insert_dense("docs", [{"id": "1", "vector": [0.1, 0.2, ...], "metadata": {"title": "Hello"}}])
-
-# Search
-results = client.search_dense("docs", query_vector=[0.1, 0.2, ...], top_k=5)
-for r in results:
-    print(f"ID: {r.id}, Score: {r.score}")
-```
-
----
-
-## What's Included
-
-✅ Dense vector search (HNSW)  
-✅ Metadata filtering (pre-computed indexes)  
-✅ Batch insert/search  
-✅ Vector updates & deletes  
-✅ Snapshots for durability  
-✅ REST API + Python SDK  
-✅ Multi-collection support  
-✅ Health checks & metrics  
-
----
-
-## APIs
-
-### REST
-
-```bash
-# Create collection
-POST /collections
-{"name": "docs"}
-
-# Insert vectors
-POST /collections/{name}/insert
-{"vectors": [{"id": "1", "vector": [...], "metadata": {"title": "..."}}]}
-
-# Search
-POST /collections/{name}/search
-{"vector": [...], "top_k": 5}
-
-# Search with metadata filter
-POST /collections/{name}/search
-{"vector": [...], "filter": {"title": "hello"}, "top_k": 5}
-
-# Get stats
-GET /collections/{name}/stats
-
-# Create snapshot
-POST /collections/{name}/snapshot
-{"name": "backup_v1"}
 ```
 
 ### Python SDK
@@ -86,104 +40,101 @@ from waffledb import WaffleClient
 
 client = WaffleClient("http://localhost:8080")
 
-# Collections
-client.create_collection("docs")
-client.list_collections()
-client.get_stats("docs")
+# Add vectors (collection auto-creates!)
+client.add(
+    "my_collection",
+    ids=["doc1", "doc2"],
+    embeddings=[[0.1]*384, [0.2]*384],
+    metadata=[{"title": "Intro"}, {"title": "Advanced"}]
+)
 
-# Insert/Search
-client.insert_dense("docs", [{"id": "1", "vector": [...], "metadata": {...}}])
-results = client.search_dense("docs", query_vector=[...], top_k=5)
-results = client.search_dense("docs", query_vector=[...], top_k=5, filter={"category": "A"})
+# Search
+results = client.search("my_collection", [0.15]*384, limit=5)
+for r in results:
+    print(f"ID: {r.id}, Score: {r.score:.4f}")
+```
 
-# Get/Update/Delete
-client.get_vector("docs", "1")
-client.upsert_dense("docs", [{"id": "1", "vector": [...]}])
-client.delete_vector("docs", "1")
+Install: `pip install waffledb`
 
-# Batch
-client.batch_insert("docs", [{"id": "1", "vector": [...]}, ...])
-results = client.batch_search("docs", [{"vector": [...]}, ...])
+### REST API
 
-# Snapshots
-client.create_snapshot("docs", "backup")
-client.restore_snapshot("snapshot_id", "docs")
-client.list_snapshots()
+```bash
+# Add vectors
+curl -X POST http://localhost:8080/collections/my_collection/add \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ids": ["doc1", "doc2"],
+    "embeddings": [[0.1, 0.2, ...], [0.3, 0.4, ...]],
+    "metadata": [{"title": "Intro"}, {"title": "Advanced"}]
+  }'
 
-# Health
-client.health()
-client.is_ready()
+# Search
+curl -X POST http://localhost:8080/collections/my_collection/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "embedding": [0.15, 0.25, ...],
+    "limit": 5
+  }'
 ```
 
 ---
 
-## Performance
+## Architecture
 
-Benchmarks on t3.xlarge (4 vCPU, 16GB RAM):
+WaffleDB consists of three main components:
 
-- **Dense insert**: 50k+ vectors/sec (768-dim)
-- **Dense search**: 10k+ queries/sec (P99 <10ms)
-- **Metadata filter**: 5-15ms overhead
-- **Memory**: ~50 bytes per vector
+- **waffledb-core** - HNSW indexing, vector operations, and storage engine
+- **waffledb-server** - Actix-web REST API and multi-tenancy layer
+- **waffledb-distributed** - RAFT replication and distributed deployment
 
-Full details: [ARCHITECTURE.md](./ARCHITECTURE.md)
+See [`/docs/architecture`](./docs) for detailed architecture documentation.
 
 ---
 
-## Getting Started
+## Development
 
-### Docker
-```bash
-docker run -p 8080:8080 -v waffledb_data:/data waffledb/waffledb:latest
-```
+### Build
 
-### Binary
-```bash
-./waffledb
-# Server on http://localhost:8080
-```
-
-### Python SDK
-```bash
-pip install waffledb
-```
-
-### From Source
 ```bash
 cargo build --release
-cargo run --release -p waffledb-server
+```
+
+### Run Tests
+
+```bash
+cargo test --release
+```
+
+### Run Benchmarks
+
+```bash
+cargo bench
 ```
 
 ---
 
-## Use Cases
+## Documentation
 
-**Embeddings Storage** - Simple, fast alternative to Pinecone for small/medium teams  
-**Product Search** - Multi-collection with filtered search by category/price/ratings  
-**Similarity Detection** - Find duplicates or related items quickly  
-**Document Search** - Store docs with dense vectors, search with metadata filters  
+Full documentation, architecture guides, and benchmarking results are in [`/docs`](./docs).
 
----
-
-## Production Ready
-
-✅ 199 tests passing, 14 perf gates validated  
-✅ Durability via snapshots  
-✅ Health checks & metrics  
-✅ Docker support  
-✅ Python SDK  
-✅ Backward compatible  
+For a separate docs website, see [waffledb-docs](https://github.com/waffledb/waffledb-docs).
 
 ---
 
-## Next
+## License
 
-- [Full Docs](./OSS_QUICKSTART.md)
-- [Architecture](./ARCHITECTURE.md)
-- [GitHub](https://github.com/waffledb/waffledb)
+AGPL-3.0 License. See [LICENSE](./LICENSE) for details.
 
 ---
 
-**Made for developers who want boring reliability over complex features.**
+## Contributing
 
-MIT Licensed
+Contributions are welcome! Please read our contributing guidelines and submit pull requests to our [GitHub](https://github.com/waffledb/waffledb).
+
+---
+
+## Community
+
+- **Discussions** - GitHub Discussions
+- **Issues** - [GitHub Issues](https://github.com/waffledb/waffledb/issues)
+- **Discord** - Join our community server

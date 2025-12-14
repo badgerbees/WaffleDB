@@ -1,6 +1,28 @@
-"""WaffleDB Python SDK"""
+"""WaffleDB Python SDK - Dead Simple Vector Search
 
-from .client import WaffleDBClient
+Quick start (2 lines):
+    from waffledb import client
+    
+    client.add("docs", ids=["doc1"], embeddings=[[0.1]*384])
+    results = client.search("docs", [0.1]*384)
+
+Or use the module-level client:
+    from waffledb import db
+    db.add("docs", ids=["doc1"], embeddings=[[0.1]*384])
+
+All features work with both approaches.
+"""
+
+# Primary simple client
+from .client import WaffleClient
+
+# Create default instance
+client = WaffleClient()
+
+# Backward compat: also expose as db
+db = client
+
+# Utilities
 from .errors import (
     WaffleDBError,
     ConnectionError,
@@ -19,16 +41,24 @@ from .utils import (
 
 __version__ = "0.1.0"
 __all__ = [
-    "WaffleDBClient",
+    # Simple client (start here!)
+    "client",
+    "db",
+    
+    # Errors
     "WaffleDBError",
     "ConnectionError",
     "TimeoutError",
     "ValidationError",
     "NotFoundError",
+    
+    # Types
     "Vector",
     "Metadata",
     "SearchResult",
     "VectorData",
+    
+    # Utils
     "normalize_vector",
     "l2_distance",
     "cosine_distance",

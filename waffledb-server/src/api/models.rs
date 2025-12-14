@@ -149,7 +149,7 @@ pub struct BatchSearchRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchResultItem {
     pub id: String,
-    pub distance: f32,
+    pub score: f32,
     pub metadata: Option<HashMap<String, String>>,
 }
 
@@ -415,4 +415,36 @@ impl DetailedErrorResponse {
             .unwrap_or_default()
             .as_millis() as u64
     }
+}
+
+// ============================================================================
+// SIMPLE API MODELS - Zero friction shortcuts
+// ============================================================================
+
+/// Simple search request (shorthand for SearchRequest)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimpleSearchRequest {
+    /// Query embedding
+    pub embedding: Vec<f32>,
+    /// Max results (optional, default 5)
+    #[serde(default)]
+    pub limit: Option<usize>,
+    /// Optional metadata filter
+    #[serde(default)]
+    pub filter: Option<HashMap<String, Value>>,
+}
+
+/// Simple delete request (delete multiple IDs at once)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimpleDeleteRequest {
+    /// Vector IDs to delete
+    pub ids: Vec<String>,
+}
+
+/// Collection config (nested)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CollectionConfig {
+    pub dimension: u32,
+    pub metric: String,
+    pub index_type: String,
 }

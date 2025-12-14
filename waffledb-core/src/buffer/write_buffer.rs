@@ -31,6 +31,7 @@ pub struct VectorEntry {
 /// - Supports brute-force search for <50K vectors
 /// - Automatically triggers HNSW build when full
 /// - Thread-safe via RwLock and Arc
+/// - Ring-buffer style batch consolidation for WAL
 pub struct WriteBuffer {
     /// Raw vectors (not compressed)
     entries: Arc<RwLock<Vec<VectorEntry>>>,
@@ -43,6 +44,12 @@ pub struct WriteBuffer {
     is_building: Arc<AtomicBool>,
     entry_count: Arc<AtomicU64>,
     build_start_time: Arc<RwLock<Option<u64>>>,
+    
+    /// Batch consolidation for WAL (reduce fsync overhead)
+    /// Ring buffer: holds pending operations before batch flush
+    pending_batch: Arc<RwLock<Vec<VectorEntry>>>,
+    batch_size: usize,  // Trigger flush after N operations
+    last_batch_flush: Arc<AtomicU64>,  // Timestamp of last flush (for time-based triggers)
 }
 
 impl WriteBuffer {
@@ -55,6 +62,9 @@ impl WriteBuffer {
             is_building: Arc::new(AtomicBool::new(false)),
             entry_count: Arc::new(AtomicU64::new(0)),
             build_start_time: Arc::new(RwLock::new(None)),
+            pending_batch: Arc::new(RwLock::new(Vec::with_capacity(1000))),  // Ring buffer for 1000 ops
+            batch_size: 1000,  // Consolidate every 1000 operations
+            last_batch_flush: Arc::new(AtomicU64::new(Self::current_timestamp())),
         }
     }
 
@@ -224,6 +234,44 @@ impl WriteBuffer {
         self.entry_count.store(0, Ordering::Release);
         
         drained
+    }
+
+    /// Add entry to pending batch for consolidation
+    /// 
+    /// Part of WAL optimization: instead of fsyncing each insert individually,
+    /// we batch N inserts and fsync once. This reduces I/O overhead by ~1000×
+    /// for batch workloads.
+    /// 
+    /// Returns true if batch should be flushed (size reached or time-based trigger)
+    pub fn add_to_batch(&self, entry: VectorEntry) -> bool {
+        let mut batch = self.pending_batch.write();
+        batch.push(entry);
+        
+        // Trigger flush when batch reaches configured size
+        batch.len() >= self.batch_size
+    }
+
+    /// Get pending batch and reset (called when flushing to WAL/disk)
+    /// 
+    /// Returns all pending operations that should be written as a single WAL entry.
+    /// After flush, caller must write all entries with a single fsync() call.
+    pub fn flush_batch(&self) -> Vec<VectorEntry> {
+        let mut batch = self.pending_batch.write();
+        let entries = batch.drain(..).collect();
+        self.last_batch_flush.store(Self::current_timestamp(), Ordering::Release);
+        entries
+    }
+
+    /// Get pending batch size (for monitoring)
+    pub fn pending_batch_len(&self) -> usize {
+        self.pending_batch.read().len()
+    }
+
+    /// Check if should flush batch based on time (e.g., 100ms since last flush)
+    pub fn should_flush_batch_by_time(&self, timeout_ms: u64) -> bool {
+        let last_flush = self.last_batch_flush.load(Ordering::Acquire);
+        let now = Self::current_timestamp();
+        (now - last_flush) >= timeout_ms
     }
 
     /// Get all entries (immutable, for iteration)

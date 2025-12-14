@@ -1,0 +1,114 @@
+{
+  "dashboard": {
+    "title": "WaffleDB Performance Monitoring",
+    "tags": ["waffledb", "vector-db"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Insert Operations (Total)",
+        "targets": [
+          {
+            "expr": "rate(waffledb_insert_total[5m])"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Insert Latency (P50, P95, P99)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.5, waffledb_insert_latency_ms)"
+          },
+          {
+            "expr": "histogram_quantile(0.95, waffledb_insert_latency_ms)"
+          },
+          {
+            "expr": "histogram_quantile(0.99, waffledb_insert_latency_ms)"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Search Operations (Total)",
+        "targets": [
+          {
+            "expr": "rate(waffledb_search_total[5m])"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Search Latency (P50, P95, P99)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.5, waffledb_search_latency_ms)"
+          },
+          {
+            "expr": "histogram_quantile(0.95, waffledb_search_latency_ms)"
+          },
+          {
+            "expr": "histogram_quantile(0.99, waffledb_search_latency_ms)"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Total Vectors in Index",
+        "targets": [
+          {
+            "expr": "waffledb_vectors_total"
+          }
+        ],
+        "type": "gauge"
+      },
+      {
+        "title": "Memory Usage (Bytes)",
+        "targets": [
+          {
+            "expr": "waffledb_memory_usage_bytes"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Concurrent Operations",
+        "targets": [
+          {
+            "expr": "waffledb_concurrent_operations"
+          }
+        ],
+        "type": "gauge"
+      },
+      {
+        "title": "Error Rate",
+        "targets": [
+          {
+            "expr": "rate(waffledb_errors_total[5m])"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "PQ Compression Ratio",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.5, waffledb_pq_compression_ratio)"
+          }
+        ],
+        "type": "gauge"
+      },
+      {
+        "title": "HNSW Build Latency",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, waffledb_hnsw_build_latency_ms)"
+          }
+        ],
+        "type": "graph"
+      }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 27,
+    "version": 0
+  }
+}

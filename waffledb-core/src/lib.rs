@@ -9,6 +9,7 @@ pub mod core;
 pub mod indexing;
 pub mod vector;
 pub mod hnsw;
+pub mod hnsw_merge;
 
 // ============================================================================
 // SEARCH ENGINES & QUERY EXECUTION
@@ -21,6 +22,14 @@ pub mod search;
 pub mod compression;
 pub mod storage;
 pub mod buffer;
+pub mod compaction;
+pub mod batch;
+pub mod recovery;
+
+// ============================================================================
+// ADMIN & OPERATIONS
+// ============================================================================
+pub mod admin;
 
 // ============================================================================
 // METADATA & MAIN ENGINE
@@ -34,6 +43,20 @@ pub mod engine;
 pub mod distributed;
 pub mod multitenancy;
 
+// ============================================================================
+// OBSERVABILITY & TELEMETRY
+// ============================================================================
+pub mod observability;
+
+// ============================================================================
+// TESTING & BENCHMARKS
+// ============================================================================
+#[cfg(test)]
+mod chaos_tests;
+
+#[cfg(test)]
+mod production_benchmarks;
+
 // Re-export commonly used types
 pub use core::{Result, WaffleError, VectorType, VectorDocument, PerformanceGates};
 pub use indexing::{SparseVector, SparseVectorStore, BM25Index, Tokenizer, MultiVectorDocument, MultiVectorStore};
@@ -46,25 +69,8 @@ pub use search::{
 pub use vector::types::Vector;
 pub use hnsw::{HNSWBuilder, HNSWIndex};
 pub use buffer::{WriteBuffer, MultiLayerSearcher, BuildStatus, SearchResult};
+pub use batch::{BatchInsertRequest, BatchDeleteRequest, BatchShardRouter};
+pub use recovery::{Snapshot, SnapshotManager};
+pub use admin::{AdminToken, HealthStatus};
+pub use observability::{QueryTracer, QueryTrace, HNSWStatsCollector};
 pub use engine::{VectorEngine, EngineSearchResult, EngineStats};
-pub use distributed::{
-    sharding::ShardId,
-    sharding::ShardingStrategy,
-    sharding::HashSharding,
-    replication::ReplicationConfig,
-    replication::ReplicationManager,
-    replication::ReplicationState,
-    coordinator::Coordinator,
-    coordinator::CoordinatorConfig,
-    node::DistributedNode,
-    node::NodeConfig,
-    node::NodeState,
-    query_router::QueryRouter,
-    query_router::ConsistencyLevel,
-    query_router::MergedResult
-};
-pub use multitenancy::{
-    tenant::{Tenant, TenantConfig, TenantId},
-    namespace::{Namespace, NamespaceConfig},
-    quota::{QuotaManager, DiskQuota}
-};

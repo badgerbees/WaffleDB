@@ -4,10 +4,11 @@
 /// Uses a simple hash ring to assign documents to shards.
 
 use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 use crate::core::errors::{Result, WaffleError, ErrorCode};
 
 /// Unique identifier for a shard
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ShardId(pub u32);
 
 /// Key used for sharding decisions

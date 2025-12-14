@@ -39,7 +39,7 @@ pub async fn handle_search(
                 .map(|(id, distance)| {
                     SearchResultItem {
                         id,
-                        distance,
+                        score: distance,
                         metadata: None,
                     }
                 })
@@ -85,7 +85,7 @@ pub async fn handle_batch_search(
                     .into_iter()
                     .map(|(id, distance)| SearchResultItem {
                         id,
-                        distance,
+                        score: distance,
                         metadata: None,
                     })
                     .collect(),

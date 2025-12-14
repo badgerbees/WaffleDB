@@ -8,6 +8,7 @@ pub mod hybrid_engine;
 
 use std::sync::{RwLock, Arc};
 pub use crate::engines::hnsw_engine::HNSWEngine;
+pub use waffledb_core::hnsw_merge::MergeStats;
 pub use crate::engines::hybrid_engine::HybridEngine;
 use waffledb_core::{VectorEngine, Result};
 

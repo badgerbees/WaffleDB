@@ -154,8 +154,21 @@ snapshot-*.tar
 backups/
 snapshots/
 
-# Logs
+# Documentation (archived - see /docs folder)
+/docs/
+
+# Benchmarking & Performance Testing
+/benches/*.txt
+benchmark_results*.txt
+*.bench
+BENCHMARK_*.txt
+
+# Build logs & temporary files
+build_errors.txt
+build_out.txt
+output.txt
 *.log
+logs/
 
 # macOS
 .AppleDouble

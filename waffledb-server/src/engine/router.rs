@@ -22,7 +22,7 @@ impl RequestRouter {
         metadata: Option<Metadata>,
     ) -> waffledb_core::Result<String> {
         let vec = Vector::new(vector);
-        self.engine.insert(collection_name, id.clone(), vec, metadata)?;
+        self.engine.insert(collection_name, id.clone(), vec, metadata).await?;
         Ok(id)
     }
 

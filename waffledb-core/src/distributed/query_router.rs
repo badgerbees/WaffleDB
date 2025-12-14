@@ -39,7 +39,7 @@ pub enum ConsistencyLevel {
 }
 
 /// Result from a single shard
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ShardResult {
     pub shard_id: ShardId,
     pub doc_ids: Vec<String>,
@@ -47,7 +47,7 @@ pub struct ShardResult {
 }
 
 /// Merged result from all shards
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MergedResult {
     pub doc_ids: Vec<String>,
     pub scores: Vec<f32>,

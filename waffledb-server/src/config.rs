@@ -8,6 +8,14 @@ pub struct ServerConfig {
     pub hnsw_m: usize,
     pub hnsw_ef_construction: usize,
     pub hnsw_ef_search: usize,
+    
+    // Clustering (RAFT Distributed Mode)
+    pub cluster_mode: bool,           // Enable RAFT consensus
+    pub node_id: String,              // Unique node identifier
+    pub raft_port: u16,               // Port for inter-node RAFT RPC
+    pub peers: Vec<String>,           // List of "host:port" for other nodes
+    pub election_timeout_ms: u64,     // Milliseconds before starting election
+    pub heartbeat_interval_ms: u64,   // Milliseconds between heartbeats
 }
 
 impl Default for ServerConfig {
@@ -20,6 +28,12 @@ impl Default for ServerConfig {
             hnsw_m: 16,
             hnsw_ef_construction: 200,
             hnsw_ef_search: 200,
+            cluster_mode: false,
+            node_id: "node1".to_string(),
+            raft_port: 9090,
+            peers: vec![],
+            election_timeout_ms: 150,
+            heartbeat_interval_ms: 50,
         }
     }
 }
@@ -40,6 +54,30 @@ impl ServerConfig {
         }
         if let Ok(path) = std::env::var("WAFFLEDB_STORAGE_PATH") {
             config.storage_path = path;
+        }
+        
+        // Clustering options
+        if let Ok(enabled) = std::env::var("WAFFLEDB_CLUSTER_MODE") {
+            config.cluster_mode = enabled.to_lowercase() == "true";
+        }
+        if let Ok(node_id) = std::env::var("WAFFLEDB_NODE_ID") {
+            config.node_id = node_id;
+        }
+        if let Ok(port) = std::env::var("WAFFLEDB_RAFT_PORT") {
+            config.raft_port = port.parse().unwrap_or(9090);
+        }
+        if let Ok(peers_str) = std::env::var("WAFFLEDB_PEERS") {
+            config.peers = peers_str
+                .split(',')
+                .map(|p| p.trim().to_string())
+                .filter(|p| !p.is_empty())
+                .collect();
+        }
+        if let Ok(timeout) = std::env::var("WAFFLEDB_ELECTION_TIMEOUT_MS") {
+            config.election_timeout_ms = timeout.parse().unwrap_or(150);
+        }
+        if let Ok(interval) = std::env::var("WAFFLEDB_HEARTBEAT_INTERVAL_MS") {
+            config.heartbeat_interval_ms = interval.parse().unwrap_or(50);
         }
 
         config

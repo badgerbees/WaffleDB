@@ -22,7 +22,7 @@ impl FilterOp {
             }
             FilterOp::Range(key, start, end) => {
                 if let Some(val) = metadata.get(key) {
-                    val >= start && val <= end
+                    (val as &str) >= (start as &str) && (val as &str) <= (end as &str)
                 } else {
                     false
                 }

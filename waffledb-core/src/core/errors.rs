@@ -41,6 +41,10 @@ pub enum ErrorCode {
     InvalidConfiguration = 1701,
     ValidationFailed = 1702,
     
+    /// 1800-1899: Distributed mode errors
+    DistributedModeError = 1801,
+    ConfigError = 1802,
+
     /// 9000: Unknown error
     Unknown = 9000,
 }
@@ -70,6 +74,8 @@ impl ErrorCode {
             ErrorCode::DeadlockDetected => "DEADLOCK_DETECTED",
             ErrorCode::InvalidConfiguration => "INVALID_CONFIGURATION",
             ErrorCode::ValidationFailed => "VALIDATION_FAILED",
+            ErrorCode::DistributedModeError => "DISTRIBUTED_MODE_ERROR",
+            ErrorCode::ConfigError => "CONFIG_ERROR",
             ErrorCode::Unknown => "UNKNOWN_ERROR",
         }
     }
@@ -95,6 +101,10 @@ pub enum WaffleError {
     DuplicateKey(String),
     /// Lock was poisoned (concurrent panic)
     LockPoisoned(String),
+    /// Distributed mode error
+    DistributedError { message: String },
+    /// Configuration error
+    ConfigError { message: String },
     /// Generic error with code
     WithCode { code: ErrorCode, message: String },
 }
@@ -111,6 +121,8 @@ impl WaffleError {
             WaffleError::CollectionNotFound(_) => ErrorCode::CollectionNotFound,
             WaffleError::DuplicateKey(_) => ErrorCode::DuplicateVectorID,
             WaffleError::LockPoisoned(_) => ErrorCode::LockPoisoned,
+            WaffleError::DistributedError { .. } => ErrorCode::DistributedModeError,
+            WaffleError::ConfigError { .. } => ErrorCode::ConfigError,
             WaffleError::WithCode { code, .. } => *code,
         }
     }
@@ -149,6 +161,12 @@ impl fmt::Display for WaffleError {
             WaffleError::LockPoisoned(context) => {
                 write!(f, "[{}] Lock poisoned (concurrent panic detected): {}", 
                     self.code().as_str(), context)
+            }
+            WaffleError::DistributedError { message } => {
+                write!(f, "[{}] Distributed error: {}", self.code().as_str(), message)
+            }
+            WaffleError::ConfigError { message } => {
+                write!(f, "[{}] Config error: {}", self.code().as_str(), message)
             }
             WaffleError::WithCode { code, message } => {
                 write!(f, "[{}] {}", code.as_str(), message)
