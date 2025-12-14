@@ -9,7 +9,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="waffledb",
-    version="0.1.2",
+    version="0.2.0",
     author="WaffleDB Team",
     author_email="team@waffledb.dev",
     description="Python client for WaffleDB vector database",

@@ -341,3 +341,94 @@ class WaffleClient:
         resp = requests.get(f"{self.url}/metrics", timeout=self.timeout)
         resp.raise_for_status()
         return resp.json()
+
+    # ===== ADVANCED OPERATIONS =====
+
+    def delete_by_filter(self, collection: str, filter: Dict[str, Any]) -> Dict[str, Any]:
+        """Delete vectors matching filter criteria"""
+        self._ensure_collection(collection)
+        payload = {"filter": filter}
+        try:
+            resp = requests.post(
+                f"{self.url}/collections/{collection}/delete-by-filter",
+                json=payload,
+                timeout=self.timeout,
+            )
+            self._handle_http_error(resp, "delete_by_filter")
+            return resp.json()
+        except requests.RequestException as e:
+            raise ConnectionError(f"Failed to delete by filter: {str(e)}")
+
+    def update_by_filter(self, collection: str, filter: Dict[str, Any], metadata_update: Dict[str, Any]) -> Dict[str, Any]:
+        """Update metadata for vectors matching filter"""
+        self._ensure_collection(collection)
+        payload = {"filter": filter, "metadata": metadata_update}
+        try:
+            resp = requests.post(
+                f"{self.url}/collections/{collection}/update-by-filter",
+                json=payload,
+                timeout=self.timeout,
+            )
+            self._handle_http_error(resp, "update_by_filter")
+            return resp.json()
+        except requests.RequestException as e:
+            raise ConnectionError(f"Failed to update by filter: {str(e)}")
+
+    def scroll(self, collection: str, limit: int = 100, offset: int = 0) -> Dict[str, Any]:
+        """Scroll through vectors with pagination"""
+        self._ensure_collection(collection)
+        payload = {"limit": limit, "offset": offset}
+        try:
+            resp = requests.post(
+                f"{self.url}/collections/{collection}/scroll",
+                json=payload,
+                timeout=self.timeout,
+            )
+            self._handle_http_error(resp, "scroll")
+            return resp.json()
+        except requests.RequestException as e:
+            raise ConnectionError(f"Failed to scroll: {str(e)}")
+
+    def aggregate(self, collection: str, operation: str, field: str) -> Dict[str, Any]:
+        """Aggregate operation on vectors (count, sum, avg, min, max)"""
+        self._ensure_collection(collection)
+        payload = {"operation": operation, "field": field}
+        try:
+            resp = requests.post(
+                f"{self.url}/collections/{collection}/aggregate",
+                json=payload,
+                timeout=self.timeout,
+            )
+            self._handle_http_error(resp, "aggregate")
+            return resp.json()
+        except requests.RequestException as e:
+            raise ConnectionError(f"Failed to aggregate: {str(e)}")
+
+    def rerank(self, collection: str, candidates: List[str], query_embedding: List[float]) -> List[str]:
+        """Rerank search results using different metric"""
+        self._ensure_collection(collection)
+        payload = {"candidates": candidates, "embedding": query_embedding}
+        try:
+            resp = requests.post(
+                f"{self.url}/collections/{collection}/rerank",
+                json=payload,
+                timeout=self.timeout,
+            )
+            self._handle_http_error(resp, "rerank")
+            return resp.json().get("ranked_ids", [])
+        except requests.RequestException as e:
+            raise ConnectionError(f"Failed to rerank: {str(e)}")
+
+    def stats(self, collection: str) -> Dict[str, Any]:
+        """Get detailed stats for a collection"""
+        self._ensure_collection(collection)
+        try:
+            resp = requests.get(
+                f"{self.url}/collections/{collection}/stats",
+                timeout=self.timeout,
+            )
+            self._handle_http_error(resp, "stats")
+            return resp.json()
+        except requests.RequestException as e:
+            raise ConnectionError(f"Failed to get stats: {str(e)}")
+
