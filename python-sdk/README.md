@@ -59,6 +59,19 @@ Done! No setup, no config, everything auto-created.
 
 ---
 
+## Advanced Features (v0.2.0+)
+
+| Method | Purpose |
+|--------|---------|
+| `delete_by_filter(collection, filter)` | Bulk delete with criteria |
+| `update_by_filter(collection, filter, metadata)` | Bulk metadata update |
+| `scroll(collection, limit, offset)` | Pagination support |
+| `aggregate(collection, operation, field)` | Statistics (count/sum/avg/min/max) |
+| `rerank(collection, candidates, query_embedding)` | Re-rank results |
+| `stats(collection)` | Detailed collection info |
+
+---
+
 ## Real World Examples
 
 ### RAG / Semantic Search
@@ -166,6 +179,36 @@ for tenant in tenants:
     client.add(f"tenant_{tenant.id}", ids=[d["id"] for d in docs], embeddings=[d["emb"] for d in docs])
 
 results = client.search(f"tenant_{tenant_id}", query_emb)
+```
+
+### Bulk Operations & Pagination (v0.2.0+)
+
+```python
+from waffledb import WaffleClient
+
+client = WaffleClient("http://localhost:8080")
+
+# Bulk delete old documents
+client.delete_by_filter("docs", {"created": {"$lt": "2024-01-01"}})
+
+# Bulk update metadata
+client.update_by_filter("docs", {"status": "archived"}, {"active": False})
+
+# Scroll through large collections
+page = 0
+while True:
+    results = client.scroll("docs", limit=100, offset=page*100)
+    if not results:
+        break
+    process_batch(results)
+    page += 1
+
+# Get collection statistics
+stats = client.aggregate("docs", "count")
+print(f"Total vectors: {stats['count']}")
+
+avg_score = client.aggregate("docs", "avg", "score")
+print(f"Average score: {avg_score}")
 ```
 
 ---

@@ -4,7 +4,7 @@
 
 WaffleDB is a vector database built to be simple and small. Single binary, no dependencies, runs on a laptop. Great for semantic search, retrieval systems, and anything that needs to store and search vectors quickly.
 
-[Website](https://waffledb.io) • [Docs](./docs) • [Discord](#) • [GitHub Issues](https://github.com/waffledb/waffledb)
+[Website](https://waffledb.ibuildanything.com) • [Docs](https://waffledb.ibuildanything.com/docs) • [GitHub](https://github.com/badgerbees/waffledb)
 
 ---
 
@@ -89,11 +89,9 @@ cargo bench
 
 ---
 
-## Docs
+## Documentation
 
-Full documentation and architecture guides are in the [`/docs`](./docs) folder.
-
-For a separate docs website, check out [waffledb-docs](https://github.com/waffledb/waffledb-docs).
+Full documentation is available at [waffledb.ibuildanything.com/docs](https://waffledb.ibuildanything.com/docs)
 
 ---
 
@@ -105,6 +103,5 @@ AGPL-3.0. See [LICENSE](./LICENSE).
 
 ## Questions?
 
-- Open an issue on [GitHub](https://github.com/waffledb/waffledb/issues)
-- Join the community on Discord
-- Check the [Docs](./docs)
+- Open an issue on [GitHub](https://github.com/badgerbees/waffledb/issues)
+- Check the [Documentation](https://waffledb.ibuildanything.com/docs)

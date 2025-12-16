@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "waffledb"
-version = "0.2.0"
+version = "0.2.1"
 description = "Python client for WaffleDB vector database"
 readme = "README.md"
 authors = [{name = "WaffleDB Team", email = "team@waffledb.dev"}]
