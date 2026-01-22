@@ -23,6 +23,7 @@ pub mod scatter_gather;
 pub mod replica_sync;
 pub mod raft;  // RAFT consensus implementation
 pub mod apply_entry;  // Apply RAFT entries to engine
+pub mod leader_election;  // RAFT leader election with timeouts
 
 // Multi-node distributed layer (OSS + Enterprise)
 pub mod cluster;
