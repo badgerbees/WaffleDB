@@ -22,6 +22,7 @@ pub mod query_router;
 pub mod scatter_gather;
 pub mod replica_sync;
 pub mod raft;  // RAFT consensus implementation
+pub mod apply_entry;  // Apply RAFT entries to engine
 
 // Multi-node distributed layer (OSS + Enterprise)
 pub mod cluster;
