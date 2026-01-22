@@ -7,10 +7,11 @@ use tracing::{info, error, debug, instrument};
 use crate::metrics;
 use crate::utils::filters::normalize_metadata;
 
-/// Handle single insert request
-#[instrument(skip(engine, req), fields(collection = %collection))]
+/// Handle single insert request with tenant isolation
+#[instrument(skip(engine, req), fields(collection = %collection, tenant = %tenant_id))]
 pub async fn handle_insert(
     engine: &EngineState,
+    tenant_id: &str,
     collection: String,
     req: InsertRequest,
 ) -> waffledb_core::Result<InsertResponse> {
@@ -33,7 +34,7 @@ pub async fn handle_insert(
 
     debug!(vector_id = %id, dimension = vector_dim, metadata_size, "Inserting vector");
 
-    match engine.insert(&collection, id.clone(), vector, metadata).await {
+    match engine.insert_for_tenant(tenant_id, &collection, id.clone(), vector, metadata).await {
         Ok(()) => {
             let elapsed_ms = start.elapsed().as_secs_f64() * 1000.0;
             let elapsed_secs = elapsed_ms / 1000.0;
@@ -68,7 +69,7 @@ pub async fn handle_insert(
     }
 }
 
-/// Handle batch insert request with deterministic processing
+/// Handle batch insert request with tenant isolation and deterministic processing
 /// 
 /// **Batch Consolidation Feature (WAL Optimization):**
 /// - Incoming batch: N vectors in single HTTP request
@@ -86,11 +87,12 @@ pub async fn handle_insert(
 /// Parallel vector preparation while maintaining sequential insertion
 pub async fn handle_batch_insert(
     engine: &EngineState,
+    tenant_id: &str,
     collection: String,
     req: BatchInsertRequest,
 ) -> waffledb_core::Result<BatchInsertResponse> {
     let batch_size = req.vectors.len();
-    info!(batch_size, collection = %collection, "Starting batch insert (deterministic) - batch consolidation enabled");
+    info!(batch_size, collection = %collection, tenant = %tenant_id, "Starting batch insert (deterministic) - batch consolidation enabled");
     let start = Instant::now();
     
     // Prepare vectors in parallel (non-blocking)
@@ -126,7 +128,7 @@ pub async fn handle_batch_insert(
     // This ensures duplicate policies (reject/overwrite/skip) work consistently
     for (_idx, id, vector, metadata) in sorted {
         debug!(vector_id = %id, "Inserting vector from batch");
-        match engine.insert(&collection, id.clone(), vector, metadata).await {
+        match engine.insert_for_tenant(tenant_id, &collection, id.clone(), vector, metadata).await {
             Ok(()) => {
                 inserted += 1;
                 debug!(vector_id = %id, "Vector inserted successfully");

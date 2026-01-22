@@ -3,10 +3,11 @@ use crate::api::models::*;
 use crate::engines::EngineType;
 use tracing::{info, error, instrument};
 
-/// Handle create collection
-#[instrument(skip(engine, req))]
+/// Handle create collection with tenant isolation
+#[instrument(skip(engine, req), fields(tenant = %tenant_id))]
 pub async fn handle_create_collection(
     engine: &EngineState,
+    tenant_id: &str,
     req: CreateCollectionRequest,
 ) -> Result<CreateCollectionResponse, String> {
     // Parse engine type from request (default to Hybrid)
@@ -15,13 +16,17 @@ pub async fn handle_create_collection(
         Some("hybrid") | _ => EngineType::Hybrid,
     };
 
-    match engine.create_collection_with_engine(req.name.clone(), req.dimension, engine_type, req.duplicate_policy.clone()) {
+    // Scoped collection name includes tenant_id for isolation
+    let scoped_name = format!("{}:{}", tenant_id, req.name);
+    
+    match engine.create_collection_with_engine(scoped_name.clone(), req.dimension, engine_type, req.duplicate_policy.clone()) {
         Ok(()) => {
             info!(
                 name = %req.name,
                 dimension = req.dimension,
                 metric = %req.metric,
                 engine_type = engine_type.as_str(),
+                tenant = %tenant_id,
                 "Collection created"
             );
             Ok(CreateCollectionResponse {
@@ -35,6 +40,7 @@ pub async fn handle_create_collection(
         Err(e) => {
             error!(
                 name = %req.name,
+                tenant = %tenant_id,
                 error = %e,
                 "Collection creation failed"
             );
@@ -43,15 +49,16 @@ pub async fn handle_create_collection(
     }
 }
 
-/// Handle delete collection
-#[instrument(skip(engine, req))]
+/// Handle delete collection with tenant isolation
+#[instrument(skip(engine, req), fields(tenant = %tenant_id))]
 pub async fn handle_delete_collection(
     engine: &EngineState,
+    tenant_id: &str,
     req: DeleteCollectionRequest,
 ) -> Result<DeleteCollectionResponse, String> {
-    match engine.delete_collection(&req.name) {
+    match engine.delete_collection_for_tenant(tenant_id, &req.name) {
         Ok(()) => {
-            info!(name = %req.name, "Collection deleted");
+            info!(name = %req.name, tenant = %tenant_id, "Collection deleted");
             Ok(DeleteCollectionResponse {
                 status: "deleted".to_string(),
             })
@@ -59,6 +66,7 @@ pub async fn handle_delete_collection(
         Err(e) => {
             error!(
                 name = %req.name,
+                tenant = %tenant_id,
                 error = %e,
                 "Collection deletion failed"
             );
@@ -67,12 +75,14 @@ pub async fn handle_delete_collection(
     }
 }
 
-/// Handle get collection
+/// Handle get collection with tenant isolation
 pub async fn handle_get_collection(
     engine: &EngineState,
+    tenant_id: &str,
     name: String,
 ) -> Result<CollectionInfo, String> {
-    let metadata = engine.get_collection(&name).map_err(|e| format!("{}", e))?;
+    let scoped_name = format!("{}:{}", tenant_id, name);
+    let metadata = engine.get_collection(&scoped_name).map_err(|e| format!("{}", e))?;
 
     Ok(CollectionInfo {
         name: metadata.name,

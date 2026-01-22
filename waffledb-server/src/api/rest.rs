@@ -2,6 +2,7 @@ use actix_web::{web, HttpResponse, Responder};
 use crate::engine::state::EngineState;
 use crate::api::models::*;
 use crate::handlers::*;
+use crate::middleware::RequestContext;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -66,9 +67,10 @@ fn handle_error(error: &str, status_code: u32) -> HttpResponse {
 /// POST /collections - Create a new collection
 pub async fn create_collection(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     req: web::Json<CreateCollectionRequest>,
 ) -> impl Responder {
-    match collection::handle_create_collection(engine.as_ref().as_ref(), req.into_inner()).await {
+    match collection::handle_create_collection(engine.as_ref().as_ref(), &ctx.tenant_id, req.into_inner()).await {
         Ok(response) => HttpResponse::Created().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -77,12 +79,13 @@ pub async fn create_collection(
 /// DELETE /collections/{name} - Delete a collection
 pub async fn delete_collection(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
 ) -> impl Responder {
     let req = DeleteCollectionRequest {
         name: name.into_inner(),
     };
-    match collection::handle_delete_collection(engine.as_ref().as_ref(), req).await {
+    match collection::handle_delete_collection(engine.as_ref().as_ref(), &ctx.tenant_id, req).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -91,9 +94,10 @@ pub async fn delete_collection(
 /// GET /collections/{name} - Get collection metadata
 pub async fn get_collection(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
 ) -> impl Responder {
-    match collection::handle_get_collection(engine.as_ref().as_ref(), name.into_inner()).await {
+    match collection::handle_get_collection(engine.as_ref().as_ref(), &ctx.tenant_id, name.into_inner()).await {
         Ok(info) => HttpResponse::Ok().json(info),
         Err(e) => handle_error(&format!("{}", e), 404),
     }
@@ -116,10 +120,11 @@ pub async fn list_collections(
 /// POST /collections/{name}/insert - Insert a single vector
 pub async fn insert(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
     req: web::Json<InsertRequest>,
 ) -> impl Responder {
-    match insert::handle_insert(engine.as_ref().as_ref(), name.into_inner(), req.into_inner()).await {
+    match insert::handle_insert(engine.as_ref().as_ref(), &ctx.tenant_id, name.into_inner(), req.into_inner()).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -128,10 +133,11 @@ pub async fn insert(
 /// POST /collections/{name}/batch_insert - Batch insert vectors
 pub async fn batch_insert(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
     req: web::Json<BatchInsertRequest>,
 ) -> impl Responder {
-    match insert::handle_batch_insert(engine.as_ref().as_ref(), name.into_inner(), req.into_inner()).await {
+    match insert::handle_batch_insert(engine.as_ref().as_ref(), &ctx.tenant_id, name.into_inner(), req.into_inner()).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -144,10 +150,11 @@ pub async fn batch_insert(
 /// POST /collections/{name}/search - Single search query
 pub async fn search(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
     req: web::Json<SearchRequest>,
 ) -> impl Responder {
-    match search::handle_search(engine.as_ref().as_ref(), name.into_inner(), req.into_inner()).await {
+    match search::handle_search(engine.as_ref().as_ref(), &ctx.tenant_id, name.into_inner(), req.into_inner()).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -156,10 +163,11 @@ pub async fn search(
 /// POST /collections/{name}/batch_search - Batch search queries
 pub async fn batch_search(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
     req: web::Json<BatchSearchRequest>,
 ) -> impl Responder {
-    match search::handle_batch_search(engine.as_ref().as_ref(), name.into_inner(), req.into_inner()).await {
+    match search::handle_batch_search(engine.as_ref().as_ref(), &ctx.tenant_id, name.into_inner(), req.into_inner()).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -172,11 +180,12 @@ pub async fn batch_search(
 /// DELETE /collections/{name}/vectors/{id} - Delete a vector
 pub async fn delete(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     path: web::Path<(String, String)>,
 ) -> impl Responder {
     let (collection, id) = path.into_inner();
     let req = DeleteRequest { id };
-    match delete::handle_delete(engine.as_ref().as_ref(), collection, req).await {
+    match delete::handle_delete(engine.as_ref().as_ref(), &ctx.tenant_id, collection, req).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -374,6 +383,7 @@ pub async fn ready(
 /// POST /collections/{name}/add - Add vectors (auto-creates collection if needed)
 pub async fn add(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
     req: web::Json<BatchInsertRequest>,
 ) -> impl Responder {
@@ -424,10 +434,10 @@ pub async fn add(
         duplicate_policy: "overwrite".to_string(),
     };
     
-    let _ = collection::handle_create_collection(engine.as_ref().as_ref(), create_req).await;
+    let _ = collection::handle_create_collection(engine.as_ref().as_ref(), &ctx.tenant_id, create_req).await;
     
     // Now insert normally
-    match insert::handle_batch_insert(engine.as_ref().as_ref(), collection_name.clone(), req.into_inner()).await {
+    match insert::handle_batch_insert(engine.as_ref().as_ref(), &ctx.tenant_id, collection_name.clone(), req.into_inner()).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -436,6 +446,7 @@ pub async fn add(
 /// POST /collections/{name}/search - Search for similar vectors (Simple API)
 pub async fn simple_search(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
     req: web::Json<SimpleSearchRequest>,
 ) -> impl Responder {
@@ -464,7 +475,7 @@ pub async fn simple_search(
         include_metadata: true,
     };
     
-    match search::handle_search(engine.as_ref().as_ref(), name.into_inner(), search_req).await {
+    match search::handle_search(engine.as_ref().as_ref(), &ctx.tenant_id, name.into_inner(), search_req).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => handle_error(&format!("{}", e), 400),
     }
@@ -473,6 +484,7 @@ pub async fn simple_search(
 /// POST /collections/{name}/delete - Delete vectors (Simple API - Batch)
 pub async fn simple_delete(
     engine: web::Data<Arc<EngineState>>,
+    ctx: RequestContext,
     name: web::Path<String>,
     req: web::Json<SimpleDeleteRequest>,
 ) -> impl Responder {
@@ -490,7 +502,7 @@ pub async fn simple_delete(
     
     for id in &req.ids {
         let delete_req = DeleteRequest { id: id.clone() };
-        match delete::handle_delete(engine.as_ref().as_ref(), collection.clone(), delete_req).await {
+        match delete::handle_delete(engine.as_ref().as_ref(), &ctx.tenant_id, collection.clone(), delete_req).await {
             Ok(_) => deleted_count += 1,
             Err(e) => errors.push(format!("{}: {}", id, e)),
         }

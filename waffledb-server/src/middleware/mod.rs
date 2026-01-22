@@ -1,5 +1,8 @@
+pub mod auth;
 pub mod timeout;
 pub mod rate_limit;
+
+pub use auth::RequestContext;
 
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
