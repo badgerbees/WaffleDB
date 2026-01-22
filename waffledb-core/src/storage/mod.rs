@@ -17,3 +17,6 @@ pub use snapshot_repair::{SnapshotRepairManager, VerifiedSnapshot, VerificationS
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod batch_consolidation_tests;
