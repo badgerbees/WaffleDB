@@ -120,6 +120,8 @@ mod tests {
             timestamp: 1234567890,
             version: 1,
             num_vectors: 100,
+            parent_snapshot: None,
+            checksum: None,
         };
         
         assert_eq!(meta.timestamp, 1234567890);
@@ -143,6 +145,8 @@ mod tests {
             timestamp: 1000,
             version: 1,
             num_vectors: 50,
+            parent_snapshot: None,
+            checksum: None,
         };
         
         let data = vec![1, 2, 3, 4, 5];
@@ -161,12 +165,16 @@ mod tests {
             timestamp: 1000,
             version: 1,
             num_vectors: 50,
+            parent_snapshot: None,
+            checksum: None,
         };
         
         let meta2 = SnapshotMetadata {
             timestamp: 2000,
             version: 2,
             num_vectors: 100,
+            parent_snapshot: None,
+            checksum: None,
         };
         
         manager.create_snapshot(meta1.clone(), &vec![1, 2, 3]).unwrap();
@@ -185,6 +193,8 @@ mod tests {
             timestamp: 3000,
             version: 1,
             num_vectors: 25,
+            parent_snapshot: None,
+            checksum: None,
         };
         
         let original_data = vec![10, 20, 30, 40, 50];
@@ -203,6 +213,8 @@ mod tests {
             timestamp: 4000,
             version: 1,
             num_vectors: 10,
+            parent_snapshot: None,
+            checksum: None,
         };
         
         let filename = manager.create_snapshot(meta, &vec![1, 2]).unwrap();

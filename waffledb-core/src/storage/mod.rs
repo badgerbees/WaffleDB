@@ -12,7 +12,7 @@ pub use index_persistence::{
 };
 pub use crash_recovery::{CrashRecoveryManager, RecoveryResult};
 pub use batch_wal::{BatchWAL, BatchOp, BatchMetrics};
-pub use incremental_snapshots::{IncrementalSnapshotManager, BaseSnapshot, DeltaSnapshot, SnapshotMetadata, SnapshotType};
+pub use incremental_snapshots::{IncrementalSnapshotManager, BaseSnapshot, DeltaSnapshot, IncrementalSnapshotMetadata, SnapshotType};
 pub use snapshot_repair::{SnapshotRepairManager, VerifiedSnapshot, VerificationStatus, RepairResult};
 
 #[cfg(test)]
